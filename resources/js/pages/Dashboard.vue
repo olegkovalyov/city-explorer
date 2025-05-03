@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import WeatherDisplay from '@/Components/WeatherDisplay.vue'; 
 import LocalInfoCard from '@/Components/LocalInfoCard.vue'; 
+import SearchResults from '@/Components/SearchResults.vue'; 
+import FavoritesList from '@/Components/FavoritesList.vue'; 
 import { Star } from 'lucide-vue-next';
 
 import { useFavorites } from '@/composables/useFavorites.js';
@@ -113,200 +115,28 @@ onUnmounted(() => {});
                                     <TabsTrigger value="favorites">Favorites ({{ favoritePlaces.length }})</TabsTrigger>
                                 </TabsList>
 
-                                <!-- Search Results Tab Content -->
+                                <!-- Use SearchResults component here -->
                                 <TabsContent value="search">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Nearby Places</CardTitle>
-                                            <CardDescription>Places discovered around the selected location.</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <!-- Conditional rendering for Search Results -->
-                                            <div v-if="placesLoading" class="text-center text-muted-foreground">Loading places...</div>
-                                            <div v-else-if="placesError" class="text-center text-red-600 dark:text-red-400">{{ placesError }}</div>
-                                            <div
-                                                v-else-if="places.length > 0"
-                                                class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"
-                                            >
-                                                <div v-for="place in places" :key="place.id" class="relative">
-                                                    <Card
-                                                        class="h-full cursor-pointer transition-shadow duration-200 hover:shadow-lg"
-                                                        @click="openGallery(place)"
-                                                    >
-                                                        <CardHeader class="p-0">
-                                                            <img
-                                                                v-if="place.photos && place.photos.length > 0"
-                                                                :src="place.photos[0]"
-                                                                :alt="place.name"
-                                                                class="h-40 w-full rounded-t-lg object-cover"
-                                                                loading="lazy"
-                                                                @error="
-                                                                    $event.target.src =
-                                                                        'data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 class=%27lucide lucide-image-off%27%3e%3cpath d=%27M8.5 10.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z%27/%3e%3cpath d=%27M14.5 14.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z%27/%3e%3cpath d=%27M21 15l-5-5L7 21%27/%3e%3cpath d=%27m2 2 20 20%27/%3e%3cpath d=%27M12.56 12.56c-.22-.13-.47-.21-.74-.26-.26-.05-.53-.08-.81-.08a4.5 4.5 0 0 0-4.48 4.17c.05.28.08.55.08.83A4.5 4.5 0 0 0 11 21.5c.28 0 .55-.03.83-.08a4.5 4.5 0 0 0 4.17-4.48c0-.28-.03-.55-.08-.83a4.5 4.5 0 0 0-3.37-3.61Z%27/%3e%3c/svg%3e';
-                                                                    $event.target.style.objectFit = 'contain';
-                                                                    $event.target.style.padding = '1rem';
-                                                                "
-                                                            />
-                                                            <div
-                                                                v-else
-                                                                class="flex h-40 w-full items-center justify-center rounded-t-lg bg-muted text-muted-foreground"
-                                                            >
-                                                                <svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="24"
-                                                                    height="24"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    stroke-width="2"
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    class="lucide lucide-image-off"
-                                                                >
-                                                                    <path
-                                                                        d="M8.5 10.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z"
-                                                                    />
-                                                                    <path
-                                                                        d="M14.5 14.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z"
-                                                                    />
-                                                                    <path d="M21 15l-5-5L7 21" />
-                                                                    <path d="m2 2 20 20" />
-                                                                    <path
-                                                                        d="M12.56 12.56c-.22-.13-.47-.21-.74-.26-.26-.05-.53-.08-.81-.08a4.5 4.5 0 0 0-4.48 4.17c.05.28.08.55.08.83A4.5 4.5 0 0 0 11 21.5c.28 0 .55-.03.83-.08a4.5 4.5 0 0 0 4.17-4.48c0-.28-.03-.55-.08-.83a4.5 4.5 0 0 0-3.37-3.61Z"
-                                                                    />
-                                                                </svg>
-                                                            </div>
-                                                        </CardHeader>
-                                                        <CardContent class="p-4">
-                                                            <CardTitle class="mb-1 truncate text-lg">{{ place.name }}</CardTitle>
-                                                            <Badge variant="secondary" class="mb-2"
-                                                                ><img
-                                                                    v-if="place.category_icon"
-                                                                    :src="place.category_icon"
-                                                                    :alt="place.category"
-                                                                    class="mr-1 h-4 w-4"
-                                                                />{{ place.category || place.categories?.[0]?.name || 'N/A' }}
-                                                            </Badge>
-                                                            <p v-if="place.address" class="truncate text-sm text-muted-foreground">
-                                                                {{ place.address }}
-                                                            </p>
-                                                            <p v-else class="text-sm italic text-muted-foreground">Address not available</p>
-                                                        </CardContent>
-                                                    </Card>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        class="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
-                                                        @click.stop="handleToggleFavorite(place)"
-                                                        :title="isFavorite(place) ? 'Remove from Favorites' : 'Add to Favorites'"
-                                                    >
-                                                        <Star :fill="isFavorite(place) ? 'currentColor' : 'none'" class="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                            <div v-else-if="coordinates" class="py-6 text-center text-muted-foreground">
-                                                No nearby places found for this location.
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                    <SearchResults
+                                        :places="places"
+                                        :places-loading="placesLoading"
+                                        :places-error="placesError"
+                                        :coordinates="coordinates"
+                                        :is-favorite="isFavorite"
+                                        @open-gallery="openGallery"
+                                        @toggle-favorite="handleToggleFavorite"
+                                    />
                                 </TabsContent>
 
-                                <!-- Favorites Tab Content -->
+                                <!-- Use FavoritesList component here -->
                                 <TabsContent value="favorites">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Favorite Places</CardTitle>
-                                            <CardDescription>Your saved places.</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <!-- Conditional rendering for Favorites -->
-                                            <div v-if="favoritesLoading" class="py-6 text-center text-muted-foreground">Loading favorites...</div>
-                                            <div
-                                                v-else-if="favoritePlaces.length > 0"
-                                                class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"
-                                            >
-                                                <!-- Existing Favorites Grid -->
-                                                <div v-for="place in favoritePlaces" :key="place.fsq_id" class="relative">
-                                                    <Card
-                                                        class="h-full cursor-pointer transition-shadow duration-200 hover:shadow-lg"
-                                                        @click="openGallery(place)"
-                                                    >
-                                                        <CardHeader class="p-0">
-                                                            <img
-                                                                v-if="place.photo_url"
-                                                                :src="place.photo_url"
-                                                                :alt="place.name"
-                                                                class="h-40 w-full rounded-t-lg object-cover"
-                                                                loading="lazy"
-                                                                @error="
-                                                                    $event.target.src =
-                                                                        'data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 class=%27lucide lucide-image-off%27%3e%3cpath d=%27M8.5 10.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z%27/%3e%3cpath d=%27M14.5 14.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z%27/%3e%3cpath d=%27M21 15l-5-5L7 21%27/%3e%3cpath d=%27m2 2 20 20%27/%3e%3cpath d=%27M12.56 12.56c-.22-.13-.47-.21-.74-.26-.26-.05-.53-.08-.81-.08a4.5 4.5 0 0 0-4.48 4.17c.05.28.08.55.08.83A4.5 4.5 0 0 0 11 21.5c.28 0 .55-.03.83-.08a4.5 4.5 0 0 0 4.17-4.48c0-.28-.03-.55-.08-.83a4.5 4.5 0 0 0-3.37-3.61Z%27/%3e%3c/svg%3e';
-                                                                    $event.target.style.objectFit = 'contain';
-                                                                    $event.target.style.padding = '1rem';
-                                                                "
-                                                            />
-                                                            <div
-                                                                v-else
-                                                                class="flex h-40 w-full items-center justify-center rounded-t-lg bg-muted text-muted-foreground"
-                                                            >
-                                                                <svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="24"
-                                                                    height="24"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    stroke-width="2"
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    class="lucide lucide-image-off"
-                                                                >
-                                                                    <path
-                                                                        d="M8.5 10.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z"
-                                                                    />
-                                                                    <path
-                                                                        d="M14.5 14.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z"
-                                                                    />
-                                                                    <path d="M21 15l-5-5L7 21" />
-                                                                    <path d="m2 2 20 20" />
-                                                                    <path
-                                                                        d="M12.56 12.56c-.22-.13-.47-.21-.74-.26-.26-.05-.53-.08-.81-.08a4.5 4.5 0 0 0-4.48 4.17c.05.28.08.55.08.83A4.5 4.5 0 0 0 11 21.5c.28 0 .55-.03.83-.08a4.5 4.5 0 0 0 4.17-4.48c0-.28-.03-.55-.08-.83a4.5 4.5 0 0 0-3.37-3.61Z"
-                                                                    />
-                                                                </svg>
-                                                            </div>
-                                                        </CardHeader>
-                                                        <CardContent class="p-4">
-                                                            <CardTitle class="mb-1 truncate text-lg">{{ place.name }}</CardTitle>
-                                                            <Badge variant="secondary" class="mb-2"
-                                                                ><img
-                                                                    v-if="place.category_icon"
-                                                                    :src="place.category_icon"
-                                                                    :alt="place.category"
-                                                                    class="mr-1 h-4 w-4"
-                                                                />{{ place.category || 'N/A' }}
-                                                            </Badge>
-                                                            <p v-if="place.address" class="truncate text-sm text-muted-foreground">
-                                                                {{ place.address }}
-                                                            </p>
-                                                            <p v-else class="text-sm italic text-muted-foreground">Address not available</p>
-                                                        </CardContent>
-                                                    </Card>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        class="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
-                                                        @click.stop="handleToggleFavorite(place)"
-                                                        :title="isFavorite(place) ? 'Remove from Favorites' : 'Add to Favorites'"
-                                                    >
-                                                        <Star :fill="isFavorite(place) ? 'currentColor' : 'none'" class="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                            <div v-else class="py-6 text-center text-muted-foreground">
-                                                You haven't added any favorite places yet.
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                    <FavoritesList
+                                        :favorite-places="favoritePlaces"
+                                        :favorites-loading="favoritesLoading"
+                                        :is-favorite="isFavorite"
+                                        @open-gallery="openGallery"
+                                        @toggle-favorite="handleToggleFavorite"
+                                    />
                                 </TabsContent>
                             </Tabs>
                         </div>
