@@ -1,11 +1,22 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3'; 
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder'; 
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css'; 
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from '@/components/ui/dialog'
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +47,9 @@ const weatherError = ref(null);
 const mapContainer = ref(null); 
 const mapInstance = ref(null); 
 const geocoderContainer = ref(null); 
+
+// State for gallery modal
+const galleryPlace = ref(null); // Store the whole place object for the gallery
 
 function initializeOrUpdateMap(centerCoords = null) { 
   if (!props.mapboxToken) {
@@ -202,6 +216,59 @@ function getCsrfToken() {
     return '';
 }
 
+// --- Country to Currency Mapping (Simplified) ---
+const countryCurrencyMap = {
+    'US': 'USD ($)', 'CA': 'CAD ($)', 'MX': 'MXN ($)',
+    'GB': 'GBP (£)', 'DE': 'EUR (€)', 'FR': 'EUR (€)', 'ES': 'EUR (€)', 'IT': 'EUR (€)', 'NL': 'EUR (€)', 'PT': 'EUR (€)', // Eurozone
+    'AU': 'AUD ($)', 'NZ': 'NZD ($)',
+    'JP': 'JPY (¥)', 'CN': 'CNY (¥)', 'KR': 'KRW (₩)',
+    'IN': 'INR (₹)', 'BR': 'BRL (R$)', 'RU': 'RUB (₽)',
+    'CH': 'CHF (Fr)', 'SE': 'SEK (kr)', 'NO': 'NOK (kr)', 'DK': 'DKK (kr)',
+    // Add more common ones as needed
+};
+
+// --- Computed Properties ---
+const localTime = computed(() => {
+    if (!weatherData.value || weatherData.value.timezone_offset_seconds === null) {
+        return 'N/A';
+    }
+    try {
+        const offsetSeconds = weatherData.value.timezone_offset_seconds;
+        const localDate = new Date(Date.now() + offsetSeconds * 1000);
+
+        // Format time as HH:MM in UTC (since we manually added offset)
+        const hours = localDate.getUTCHours().toString().padStart(2, '0');
+        const minutes = localDate.getUTCMinutes().toString().padStart(2, '0');
+
+        // Format offset string (UTC+/-HH:MM)
+        const offsetHours = Math.floor(Math.abs(offsetSeconds) / 3600);
+        const offsetMinutes = Math.floor((Math.abs(offsetSeconds) % 3600) / 60);
+        const offsetSign = offsetSeconds >= 0 ? '+' : '-';
+        const offsetString = `UTC${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMinutes.toString().padStart(2, '0')}`;
+
+        return `${hours}:${minutes} (${offsetString})`;
+    } catch (e) {
+        console.error("Error calculating local time:", e);
+        return 'Error';
+    }
+});
+
+const localCurrency = computed(() => {
+    if (!weatherData.value || !weatherData.value.country_code) {
+        return 'N/A';
+    }
+    return countryCurrencyMap[weatherData.value.country_code] || `Unknown (${weatherData.value.country_code})`;
+});
+
+// --- Function to open gallery ---
+function openGallery(place) {
+  if (place && place.photos && place.photos.length > 0) {
+      galleryPlace.value = place;
+      // DialogTrigger handles opening, no need to manually set open state
+  }
+}
+
+// --- Lifecycle Hooks ---
 onMounted(() => {
   initializeOrUpdateMap(); 
 });
@@ -253,6 +320,17 @@ onUnmounted(() => {
                                     <div v-else class="text-sm text-muted-foreground">Select a location to see the weather.</div>
                                 </div>
 
+                                <!-- Local Time & Currency Card -->
+                                <Card v-if="weatherData" class="mt-4">
+                                    <CardHeader>
+                                        <CardTitle class="text-md">Local Info</CardTitle>
+                                    </CardHeader>
+                                    <CardContent class="text-sm space-y-2">
+                                        <p><span class="font-medium">Time:</span> {{ localTime }}</p>
+                                        <p><span class="font-medium">Currency:</span> {{ localCurrency }}</p>
+                                    </CardContent>
+                                </Card>
+
                                 <div v-if="placesError" class="mt-4 p-3 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                                     <p>{{ placesError }}</p>
                                 </div>
@@ -276,33 +354,42 @@ onUnmounted(() => {
                             </div>
 
                             <div v-if="!placesLoading && !placesError && places.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <Card v-for="place in places" :key="place.id">
-                                    <CardHeader class="p-0">
-                                        <img
-                                            v-if="place.photo_url"
-                                            :src="place.photo_url"
-                                            :alt="place.name"
-                                            class="h-40 w-full object-cover rounded-t-lg"
-                                            loading="lazy"
-                                            @error="$event.target.style.display='none'" />
-                                        <div v-else class="h-40 w-full bg-muted rounded-t-lg flex items-center justify-center text-muted-foreground">
-                                            <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='lucide lucide-image-off'><path d='M8.5 10.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z'/><path d='M14.5 14.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z'/><path d='M21 15l-5-5L7 21'/><path d='m2 2 20 20'/><path d='M12.56 12.56c-.22-.13-.47-.21-.74-.26-.26-.05-.53-.08-.81-.08a4.5 4.5 0 0 0-4.48 4.17c.05.28.08.55.08.83A4.5 4.5 0 0 0 11 21.5c.28 0 .55-.03.83-.08a4.5 4.5 0 0 0 4.17-4.48c0-.28-.03-.55-.08-.83a4.5 4.5 0 0 0-3.37-3.61Z'/></svg>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent class="p-4">
-                                        <CardTitle class="text-lg mb-1 truncate">{{ place.name }}</CardTitle>
-                                         <Badge variant="secondary" class="mb-2">
-                                             <img v-if="place.category_icon" :src="place.category_icon" :alt="place.category" class="w-4 h-4 mr-1"/>
-                                            {{ place.category }}
-                                         </Badge>
-                                        <p v-if="place.address" class="text-sm text-muted-foreground truncate">
-                                            {{ place.address }}
-                                        </p>
-                                        <p v-else class="text-sm text-muted-foreground italic">
-                                            Address not available
-                                        </p>
-                                    </CardContent>
-                                </Card>
+                                <Dialog v-for="place in places" :key="place.id">
+                                    <DialogTrigger as-child>
+                                        <Card class="cursor-pointer hover:shadow-lg transition-shadow duration-200" @click="openGallery(place)">
+                                            <CardHeader class="p-0">
+                                                <!-- Use first photo from the array -->
+                                                <img
+                                                    v-if="place.photos && place.photos.length > 0"
+                                                    :src="place.photos[0]" 
+                                                    :alt="place.name"
+                                                    class="h-40 w-full object-cover rounded-t-lg"
+                                                    loading="lazy"
+                                                    @error="$event.target.style.display='none'" />
+                                                <div v-else class="h-40 w-full bg-muted rounded-t-lg flex items-center justify-center text-muted-foreground">
+                                                    <!-- Placeholder SVG remains the same -->
+                                                    <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='lucide lucide-image-off'><path d='M8.5 10.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z'/><path d='M14.5 14.5c.828 0 1.5-.672 1.5-1.5s-.672-1.5-1.5-1.5-1.5.672-1.5 1.5.672 1.5 1.5 1.5Z'/><path d='M21 15l-5-5L7 21'/><path d='m2 2 20 20'/><path d='M12.56 12.56c-.22-.13-.47-.21-.74-.26-.26-.05-.53-.08-.81-.08a4.5 4.5 0 0 0-4.48 4.17c.05.28.08.55.08.83A4.5 4.5 0 0 0 11 21.5c.28 0 .55-.03.83-.08a4.5 4.5 0 0 0 4.17-4.48c0-.28-.03-.55-.08-.83a4.5 4.5 0 0 0-3.37-3.61Z'/></svg>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent class="p-4">
+                                                <CardTitle class="text-lg mb-1 truncate">{{ place.name }}</CardTitle>
+                                                 <Badge variant="secondary" class="mb-2">
+                                                     <img v-if="place.category_icon" :src="place.category_icon" :alt="place.category" class="w-4 h-4 mr-1"/>
+                                                    {{ place.category }}
+                                                 </Badge>
+                                                <p v-if="place.address" class="text-sm text-muted-foreground truncate">
+                                                    {{ place.address }}
+                                                </p>
+                                                <p v-else class="text-sm text-muted-foreground italic">
+                                                    Address not available
+                                                </p>
+                                            </CardContent>
+                                        </Card>
+                                    </DialogTrigger>
+                                </Dialog>
+                            </div>
+                            <div v-if="!placesLoading && !placesError && places.length === 0 && coordinates" class="text-center py-6 text-muted-foreground col-span-full">
+                                No nearby places found for this location.
                             </div>
                         </div>
                     </div>
@@ -310,4 +397,30 @@ onUnmounted(() => {
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- Gallery Modal -->
+    <Dialog :open="!!galleryPlace" @update:open="(isOpen) => { if (!isOpen) galleryPlace = null }">
+        <DialogContent class="sm:max-w-[600px]" v-if="galleryPlace">
+            <DialogHeader>
+                <DialogTitle>{{ galleryPlace.name }}</DialogTitle>
+                <DialogDescription>
+                    Photos provided by Foursquare.
+                </DialogDescription>
+            </DialogHeader>
+            <div class="grid grid-cols-2 gap-2 max-h-[70vh] overflow-y-auto p-1">
+                <img v-for="(photoUrl, index) in galleryPlace.photos" 
+                     :key="index" 
+                     :src="photoUrl" 
+                     :alt="`${galleryPlace.name} photo ${index + 1}`" 
+                     class="rounded-md object-cover w-full h-auto aspect-square hover:scale-105 transition-transform duration-200" loading="lazy">
+            </div>
+            <DialogFooter class="sm:justify-start">
+                <DialogClose as-child>
+                    <Button type="button" variant="secondary">
+                    Close
+                    </Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

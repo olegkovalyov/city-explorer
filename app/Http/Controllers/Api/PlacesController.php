@@ -60,7 +60,7 @@ class PlacesController extends Controller
             $results = $response->json()['results'] ?? [];
 
             // Simplify the results for the frontend
-            $places = array_map(function ($place) {
+            $places = collect($results)->map(function ($place) {
                 // Get primary category name and icon URL (if available)
                 $categoryName = $place['categories'][0]['name'] ?? 'Place';
                 $categoryIconUrl = null;
@@ -69,25 +69,21 @@ class PlacesController extends Controller
                      $categoryIconUrl = $icon['prefix'] . 'bg_64' . $icon['suffix']; // Combine prefix, size, suffix
                 }
 
-                // Get first photo URL (if available)
-                $photoUrl = null;
-                if (!empty($place['photos'][0])) {
-                    $photo = $place['photos'][0];
-                    // Construct a reasonable size photo URL (e.g., 300px width)
-                    $photoUrl = $photo['prefix'] . '300x300' . $photo['suffix'];
-                }
+                // Get up to 5 photos
+                $photosData = collect($place['photos'] ?? [])->take(5)->map(function ($photo) {
+                    // Construct URL (e.g., 300x300 size)
+                    return $photo['prefix'] . '300x300' . $photo['suffix'];
+                })->all();
 
                 return [
                     'id' => $place['fsq_id'] ?? null,
                     'name' => $place['name'] ?? 'Unknown Place',
-                    'address' => $place['location']['formatted_address'] ?? null,
+                    'address' => $place['location']['formatted_address'] ?? ($place['location']['address'] ?? 'Address not available'),
                     'category' => $categoryName,
                     'category_icon' => $categoryIconUrl,
-                    'photo_url' => $photoUrl, // Main photo for card display
-                    // Keep raw photos array if needed for carousel later?
-                    // 'all_photos' => $place['photos'] ?? []
+                    'photos' => $photosData, // Return array of photo URLs
                 ];
-            }, $results);
+            })->all();
 
             return response()->json($places);
 

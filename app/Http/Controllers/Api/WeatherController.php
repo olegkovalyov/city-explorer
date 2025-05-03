@@ -75,6 +75,8 @@ class WeatherController extends Controller
                 'city_name' => $data['name'] ?? null, // City name returned by OWM
                 'humidity' => $data['main']['humidity'] ?? null,
                 'wind_speed' => $data['wind']['speed'] ?? null,
+                'timezone_offset_seconds' => $data['timezone'] ?? null, // Timezone shift in seconds from UTC
+                'country_code' => $data['sys']['country'] ?? null, // Country code (e.g., "US", "GB")
             ];
 
             return response()->json($weatherInfo);
