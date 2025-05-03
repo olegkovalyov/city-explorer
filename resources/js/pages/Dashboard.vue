@@ -16,6 +16,7 @@ import WeatherDisplay from '@/Components/WeatherDisplay.vue';
 import LocalInfoCard from '@/Components/LocalInfoCard.vue'; 
 import SearchResults from '@/Components/SearchResults.vue'; 
 import FavoritesList from '@/Components/FavoritesList.vue'; 
+import GalleryModal from '@/Components/GalleryModal.vue'; 
 import { Star } from 'lucide-vue-next';
 
 import { useFavorites } from '@/composables/useFavorites.js';
@@ -144,84 +145,12 @@ onUnmounted(() => {});
                 </div>
 
                 <!-- Gallery Modal -->
-                <Dialog
-                    v-if="galleryPlace"
-                    :open="isGalleryOpen"
-                    @update:open="
-                        (isOpen) => {
-                            if (!isOpen) closeGallery();
-                        }
-                    "
-                >
-                    <DialogContent class="sm:max-w-[80%]">
-                        <DialogHeader>
-                            <DialogTitle>{{ galleryPlace.name }}</DialogTitle>
-                            <DialogDescription>
-                                {{ galleryPlace.address || galleryPlace.location?.formatted_address || 'Address not available' }}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div class="relative flex flex-1 items-center justify-center overflow-hidden bg-gray-100 p-2 dark:bg-gray-900">
-                            <!-- Scrollable container for the grid -->
-                            <div class="h-full w-full overflow-y-auto p-4">
-                                <!-- Loading State -->
-                                <div v-if="galleryLoading" class="flex h-full items-center justify-center">
-                                    <svg
-                                        class="-ml-1 mr-3 h-10 w-10 animate-spin text-primary"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path
-                                            class="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
-                                    </svg>
-                                    <span class="text-muted-foreground">Loading details...</span>
-                                </div>
-
-                                <!-- Error State -->
-                                <div v-else-if="galleryError" class="p-4 text-center text-destructive">
-                                    <p><strong>Error:</strong> {{ galleryError }}</p>
-                                </div>
-
-                                <!-- Image Grid Display State -->
-                                <div
-                                    v-else-if="galleryPlace && galleryPlace.photos && galleryPlace.photos.length > 0"
-                                    class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                                >
-                                    <div
-                                        v-for="(photoUrl, index) in galleryPlace.photos"
-                                        :key="photoUrl + '-' + index"
-                                        class="aspect-square overflow-hidden rounded-md bg-muted"
-                                    >
-                                        <img
-                                            :src="photoUrl"
-                                            :alt="`Photo ${index + 1} for ${galleryPlace.name}`"
-                                            class="h-full w-full cursor-pointer object-cover transition-transform duration-300 hover:scale-105"
-                                            loading="lazy"
-                                        />
-                                    </div>
-                                </div>
-
-                                <!-- No Photos State -->
-                                <div v-else class="flex h-full items-center justify-center text-center text-muted-foreground">
-                                    {{
-                                        galleryError && galleryError.includes('No photos found')
-                                            ? galleryError
-                                            : 'No photos available for this place.'
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <DialogClose as-child>
-                                <Button type="button" variant="secondary">Close</Button>
-                            </DialogClose>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <GalleryModal
+                    v-model:isOpen="isGalleryOpen"
+                    :place="galleryPlace"
+                    :loading="galleryLoading"
+                    :error="galleryError"
+                />
             </div>
             <!-- Closes max-w-7xl -->
         </div>
