@@ -48,13 +48,13 @@ const searchCity = async () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">City Explorer</h2>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">City Explorer</h2>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
 
                         <!-- Search Input -->
                         <div class="mb-6">
@@ -65,13 +65,13 @@ const searchCity = async () => {
                                     id="city-search"
                                     v-model="searchQuery"
                                     @keyup.enter="searchCity"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                                     placeholder="e.g., London, Tokyo, New York"
                                 >
                                 <button
                                     @click="searchCity"
                                     :disabled="isLoading || !searchQuery"
-                                    class="p-2.5 px-4 text-sm font-medium text-white bg-blue-700 rounded-r-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="p-2.5 px-4 text-sm font-medium text-white bg-blue-700 rounded-r-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <span v-if="!isLoading">Search</span>
                                     <span v-else>Searching...</span>
@@ -92,7 +92,7 @@ const searchCity = async () => {
                         <!-- City Data Display Area -->
                         <div v-if="cityData && !isLoading && !error" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Weather Component (Placeholder) -->
-                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg shadow">
+                            <div class="p-4 bg-gray-100 rounded-lg shadow">
                                 <h3 class="text-lg font-semibold mb-2">Weather in {{ cityData.name }}</h3>
                                 <p>Temperature: {{ cityData.weather.temp }}</p>
                                 <p>Conditions: {{ cityData.weather.description }}</p>
@@ -100,21 +100,21 @@ const searchCity = async () => {
                             </div>
 
                             <!-- Map Component (Placeholder) -->
-                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg shadow">
+                            <div class="p-4 bg-gray-100 rounded-lg shadow">
                                 <h3 class="text-lg font-semibold mb-2">Map of {{ cityData.name }}</h3>
                                 <p>(Map Component Placeholder: Lat {{ cityData.map.lat }}, Lon {{ cityData.map.lon }})</p>
                                 <!-- TODO: Replace with Map component -->
                             </div>
 
                             <!-- Photos Component (Placeholder) -->
-                            <div class="md:col-span-2 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg shadow">
+                            <div class="md:col-span-2 p-4 bg-gray-100 rounded-lg shadow">
                                 <h3 class="text-lg font-semibold mb-2">Photos of {{ cityData.name }}</h3>
                                 <p>(Photo Gallery Placeholder: {{ cityData.photos.length }} photos)</p>
                                 <!-- TODO: Replace with Photos component -->
                             </div>
 
                             <!-- Favorite Button (Placeholder) -->
-                            <div class="md:col-span-2 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg shadow">
+                            <div class="md:col-span-2 p-4 bg-gray-100 rounded-lg shadow">
                                 <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">
                                     Add to Favorites (Placeholder)
                                 </button>
