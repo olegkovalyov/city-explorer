@@ -24,7 +24,6 @@ yarn-error.log
 /.zed
 
 # Project exclude paths
-/resources/js/app.js
 /storage/app/
 /storage/framework/
-/vite.config.js
+/docker/certs/

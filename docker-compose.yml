@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: city_explorer_app
+    container_name: city-explorer-app
     restart: unless-stopped
     tty: true
     environment:
@@ -16,11 +16,14 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini # Custom PHP settings
+      - ./docker/certs:/etc/ssl/certs/project:ro # Mount certs for Vite, use consistent path
     networks:
       - app-network
     depends_on:
       - db
       - cache
+    ports:
+      - "5173:5173"
 
   # Nginx Service
   nginx:

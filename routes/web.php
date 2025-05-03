@@ -14,10 +14,19 @@ Route::get('/', function () {
     ]);
 });
 
+// Default dashboard route (can be kept or removed if not needed)
 Route::get('/dashboard', function () {
-    // return Inertia::render('Dashboard'); // Original Breeze dashboard
-    return Inertia::render('CityExplorer'); // Render our new component
+    // Redirect to city-explorer or render a different dashboard if needed
+    // For now, let's keep rendering the default Dashboard component
+    return Inertia::render('Dashboard', [
+        'mapboxToken' => env('MAPBOX_ACCESS_TOKEN')
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// City Explorer route
+Route::get('/city-explorer', function () {
+    return Inertia::render('CityExplorer');
+})->middleware(['auth', 'verified'])->name('city-explorer'); // Added name 'city-explorer'
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
