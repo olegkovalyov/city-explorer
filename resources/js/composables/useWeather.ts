@@ -59,6 +59,7 @@ export function useWeather() {
                 try {
                     const errorData = await response.json();
                     errorMessage += `: ${errorData.message || 'Unknown error'}`;
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 } catch (e) {
                     // Ignore if response is not JSON
                 }

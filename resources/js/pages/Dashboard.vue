@@ -22,11 +22,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Star } from 'lucide-vue-next';
 
-import { useWeather } from '@/composables/useWeather';
-import { usePlaces } from '@/composables/usePlaces';
-import { useFavorites } from '@/composables/useFavorites';
-import { useGalleryModal } from '@/composables/useGalleryModal';
-import { useMapbox } from '@/composables/useMapbox';
+import { useWeather } from '@/composables/useWeather.js';
+import { usePlaces } from '@/composables/usePlaces.js';
+import { useFavorites } from '@/composables/useFavorites.js';
+import { useGalleryModal } from '@/composables/useGalleryModal.js';
+import { useMapbox } from '@/composables/useMapbox.js';
 
 const props = defineProps({
     mapboxToken: String,
