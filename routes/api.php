@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\FavoriteCityController;
+use App\Http\Controllers\Api\GeocodingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,9 +20,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Geocoding route
+Route::get('/geocode', [GeocodingController::class, 'getCoordinates']);
+
 // Routes for Favorite Cities API
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('favorite-cities', FavoriteCityController::class)->only([
-        'index', 'store', 'destroy'
-    ]);
+    Route::apiResource('favorite-cities', FavoriteCityController::class)->except(['update', 'show']);
 });

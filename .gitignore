@@ -26,3 +26,4 @@ yarn-error.log
 # Project exclude paths
 /storage/app/
 /storage/framework/
+/docker/certs/
