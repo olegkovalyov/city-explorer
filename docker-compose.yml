@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: city_explorer_app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini # Custom PHP settings
+    networks:
+      - app-network
+    depends_on:
+      - db
+      - cache
+
+  # Nginx Service
+  nginx:
+    image: nginx:alpine
+    container_name: city_explorer_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80" # Keep for potential http access if needed, though we'll redirect
+      - "443:443"   # Map host port 443 to container port 443 for HTTPS
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./docker/certs:/etc/nginx/certs # Mount certificates directory
+    networks:
+      - app-network
+    depends_on:
+      - app
+
+  # Database Service (PostgreSQL)
+  db:
+    image: postgres:15 # Or your preferred version
+    container_name: city_explorer_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-laravel}
+      POSTGRES_USER: ${DB_USERNAME:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+    ports:
+      - "54321:5432" # Map host port 54321 to container port 5432
+    networks:
+      - app-network
+
+  # Cache Service (Redis)
+  cache:
+    image: redis:latest
+    container_name: city_explorer_cache
+    restart: unless-stopped
+    ports:
+      - "63791:6379" # Map host port 63791 to container port 6379
+    networks:
+      - app-network
+
+# Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  pgdata: # Persistent volume for PostgreSQL data
