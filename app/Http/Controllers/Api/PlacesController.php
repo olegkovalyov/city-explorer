@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use App\Services\PlacesService;
 
 class PlacesController extends Controller
 {
@@ -85,7 +86,7 @@ class PlacesController extends Controller
                 ];
             })->all();
 
-            return response()->json($places);
+            return response()->json(['places' => $places]);
 
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Invalid input.', 'errors' => $e->errors()], 422);
@@ -98,17 +99,34 @@ class PlacesController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified resource.
+     *
+     * @param  string  $fsq_id
+     * @param  PlacesService  $placesService
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function show(string $fsq_id, PlacesService $placesService)
     {
-        //
+        try {
+            $placeDetails = $placesService->getPlaceDetails($fsq_id);
+
+            if (!$placeDetails) {
+                return response()->json(['error' => 'Place not found or API error.'], 404);
+            }
+
+            // Optionally reformat if needed, but PlacesService should handle it
+            return response()->json($placeDetails);
+
+        } catch (\Exception $e) {
+            Log::error("Error fetching place details for {$fsq_id}: " . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch place details.'], 500);
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Store a newly created resource in storage.
      */
-    public function show(string $id)
+    public function store(Request $request)
     {
         //
     }

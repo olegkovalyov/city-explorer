@@ -150,9 +150,9 @@ async function getPlaces(lat, lng) {
             throw new Error(errorMessage);
         }
         const data = await response.json();
-        places.value = data;
+        places.value = data.places || []; // Correctly assign the array, default to empty if missing
 
-        if (places.value.length === 0) {
+        if (!places.value || places.value.length === 0) { 
             placesError.value = 'No interesting places found nearby.';
         }
     } catch (err) {

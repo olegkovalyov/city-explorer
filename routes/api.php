@@ -19,6 +19,9 @@ use App\Http\Controllers\Api\FavoritePlaceController;
 |
 */
 
+// Place Details Route (requires authentication)
+Route::middleware('auth:sanctum')->get('/places/{fsq_id}', [PlacesController::class, 'show'])->where('fsq_id', '[a-zA-Z0-9]+');
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
