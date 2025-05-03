@@ -16,7 +16,7 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini # Custom PHP settings
-      - ./docker/certs:/etc/ssl/certs # Mount certs for Vite/PHP if needed
+      - ./docker/certs:/etc/ssl/certs/project:ro # Mount certs for Vite, use consistent path
     networks:
       - app-network
     depends_on:

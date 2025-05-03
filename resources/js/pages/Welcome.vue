@@ -31,26 +31,6 @@ function handleImageError() {
     <Head title="Welcome to City Explorer" />
     <div class="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">
 
-        <!-- Navigation Links (Login/Register or Dashboard) -->
-        <div v-if="canLogin" class="absolute top-0 right-0 p-6 text-end z-10">
-            <Link
-                v-if="$page.props.auth.user"
-                :href="route('city-explorer')"
-                class="font-semibold text-white hover:text-gray-200 focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
-                >Explore Cities</Link
-            >
-
-            <template v-else>
-                <Button as="a" :href="route('login')" variant="ghost" class="font-semibold text-white hover:text-gray-200 focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500 ms-4">
-                    Log in
-                </Button>
-
-                <Button v-if="canRegister" as="a" :href="route('register')" variant="secondary" class="ms-4">
-                    Register
-                </Button>
-            </template>
-        </div>
-
         <!-- Main Content -->
         <main class="text-center z-10 p-8">
             <h1 class="text-5xl md:text-7xl font-bold mb-4 animate-fade-in-down">
