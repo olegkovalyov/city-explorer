@@ -102,24 +102,85 @@ class PlacesController extends Controller
      * Display the specified resource.
      *
      * @param  string  $fsq_id
-     * @param  PlacesService  $placesService
      * @return \Illuminate\Http\JsonResponse
      */
-    public function show(string $fsq_id, PlacesService $placesService)
+    public function show(string $fsq_id): JsonResponse
     {
-        try {
-            $placeDetails = $placesService->getPlaceDetails($fsq_id);
+        if (empty($fsq_id)) {
+            return response()->json(['message' => 'Foursquare ID is required.'], 400);
+        }
 
-            if (!$placeDetails) {
-                return response()->json(['error' => 'Place not found or API error.'], 404);
+        $apiKey = config('services.foursquare.key') ?: env('FOURSQUARE_API_KEY');
+
+        if (!$apiKey) {
+            Log::error('Foursquare API key is not configured.');
+            return response()->json(['message' => 'Foursquare API key not configured.'], 500);
+        }
+
+        // Use the Foursquare Places Details endpoint
+        $apiUrl = "https://api.foursquare.com/v3/places/{$fsq_id}";
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $apiKey,
+                'Accept' => 'application/json',
+            ])->get($apiUrl, [
+                // Specify fields needed, especially 'photos'
+                // 'location' field usually contains address details
+                'fields' => 'fsq_id,name,categories,location,photos'
+            ]);
+
+            if (!$response->successful()) {
+                Log::error('Foursquare API place details request failed.', [
+                    'fsq_id' => $fsq_id,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                return response()->json(
+                    ['message' => 'Failed to fetch place details from Foursquare.', 'details' => $response->json()],
+                    $response->status() >= 500 ? 502 : $response->status()
+                );
             }
 
-            // Optionally reformat if needed, but PlacesService should handle it
-            return response()->json($placeDetails);
+            $placeData = $response->json();
 
-        } catch (\Exception $e) {
-            Log::error("Error fetching place details for {$fsq_id}: " . $e->getMessage());
-            return response()->json(['error' => 'Failed to fetch place details.'], 500);
+            // Format the result similarly to the index method
+            $categoryName = $placeData['categories'][0]['name'] ?? 'Place';
+            $categoryIconUrl = null;
+            if (!empty($placeData['categories'][0]['icon'])) {
+                $icon = $placeData['categories'][0]['icon'];
+                $categoryIconUrl = $icon['prefix'] . 'bg_64' . $icon['suffix'];
+            }
+
+            // Format photos: use 'original' size for gallery
+            $photosData = collect($placeData['photos'] ?? [])->map(function ($photo) {
+                // Ensure prefix and suffix exist before concatenating
+                if (!empty($photo['prefix']) && !empty($photo['suffix'])) {
+                    return $photo['prefix'] . 'original' . $photo['suffix'];
+                }
+                return null; // Return null if data is incomplete
+            })->filter()->values()->all(); // Filter out nulls and re-index
+
+            $formattedPlace = [
+                'id' => $placeData['fsq_id'] ?? $fsq_id, // Use fsq_id as primary ID
+                'fsq_id' => $placeData['fsq_id'] ?? $fsq_id,
+                'name' => $placeData['name'] ?? 'Unknown Place',
+                'address' => $placeData['location']['formatted_address']
+                             ?? $placeData['location']['address']
+                             ?? ($placeData['address'] ?? 'Address not available'), // Check multiple possible fields
+                'category' => $categoryName,
+                'category_icon' => $categoryIconUrl,
+                'photos' => $photosData, // Key part: array of photo URLs
+                'location' => $placeData['location'] ?? null, // Include location object if needed
+            ];
+
+            return response()->json($formattedPlace);
+        } catch (\Throwable $e) { // Catch any throwable error
+            Log::error("Error fetching place details for {$fsq_id}: " . $e->getMessage(), [
+                'fsq_id' => $fsq_id,
+                'exception' => $e
+            ]);
+            return response()->json(['message' => 'Failed to fetch place details.'], 500);
         }
     }
 

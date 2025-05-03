@@ -43,6 +43,11 @@ const geocoderContainer = ref(null);
 
 // State for gallery modal
 const galleryPlace = ref(null); // Store the whole place object for the gallery
+const isGalleryOpen = ref(false);
+
+// --- State for Gallery Loading/Error ---
+const galleryLoading = ref(false);
+const galleryError = ref(null);
 
 // --- State for Favorites ---
 const favoritePlaces = ref([]);
@@ -434,9 +439,73 @@ async function toggleFavorite(place) {
 }
 
 // --- Function to open gallery ---
-function openGallery(place) {
-    if (place) {
-        galleryPlace.value = place;
+const openGallery = async (place) => {
+    if (!place) return; // Do nothing if place is null/undefined
+
+    console.log("Attempting to open gallery for:", place.name, place);
+    galleryLoading.value = false; // Reset states
+    galleryError.value = null;
+
+    galleryPlace.value = place; // Set initial place data
+    isGalleryOpen.value = true; // Open modal immediately
+
+    // Determine if fetching is needed (no 'photos' array or empty 'photos' array, AND has fsq_id)
+    const idToFetch = place.fsq_id || place.id;
+    const needsFetching = (!Array.isArray(place.photos) || place.photos.length === 0) && idToFetch;
+
+    if (needsFetching) {
+        console.log(`Place '${place.name}' lacks photos array, fetching details for ID: ${idToFetch}...`);
+        galleryLoading.value = true;
+        try {
+            // Fetch full details from the backend
+            const detailedPlace = await fetchPlaceDetails(idToFetch);
+            // Update galleryPlace with the complete data
+            galleryPlace.value = detailedPlace;
+            console.log("Gallery place updated with fetched details:", galleryPlace.value);
+            // If after fetching, there are still no photos, set a message (might be an error or just no photos)
+            if (!galleryPlace.value.photos || galleryPlace.value.photos.length === 0) {
+                galleryError.value = "No photos found for this place."; // Use error state to display message
+                console.warn(`No photos found for ${place.name} after fetching details.`);
+            }
+        } catch (err) {
+            console.error("Failed to fetch details for gallery:", err);
+            // Keep the modal open, but show the error message
+            galleryError.value = err.message || 'Could not load place details.';
+        } finally {
+            galleryLoading.value = false; // Ensure loading indicator is turned off
+        }
+    } else {
+        // Photos are already present (likely from search results)
+        console.log(`Opening gallery for '${place.name}' with existing photos.`);
+         if (!place.photos || place.photos.length === 0) {
+             // Should not happen if needsFetching is false, but as a safeguard
+             galleryError.value = "No photos available for this place.";
+         }
+    }
+};
+
+/**
+ * Fetches detailed information for a specific place from the backend API.
+ */
+async function fetchPlaceDetails(fsqId) {
+    if (!fsqId) {
+        console.error("fetchPlaceDetails: fsqId is missing");
+        throw new Error('Cannot fetch details without a Foursquare ID.');
+    }
+    console.log(`Fetching details via backend for FSQ ID: ${fsqId}`);
+    try {
+        // Use axios as it's likely imported elsewhere
+        const response = await axios.get(`/api/places/${fsqId}`);
+        console.log('Place details fetched successfully:', response.data);
+        // Ensure photos is always an array, even if null/missing in response
+        if (response.data && !Array.isArray(response.data.photos)) {
+            response.data.photos = [];
+        }
+        return response.data; // Return the detailed place object
+    } catch (err) {
+        console.error('Error fetching place details via backend:', err);
+        const message = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to load place details.';
+        throw new Error(message);
     }
 }
 
@@ -762,26 +831,42 @@ onUnmounted(() => {
                                 {{ galleryPlace.address || galleryPlace.location?.formatted_address || 'Address not available' }}
                             </DialogDescription>
                         </DialogHeader>
-                        <div
-                            v-if="galleryPlace.photos && galleryPlace.photos.length > 0"
-                            class="mt-4 grid max-h-[70vh] grid-cols-2 gap-4 overflow-y-auto md:grid-cols-3"
-                        >
-                            <img
-                                v-for="(photo, index) in galleryPlace.photos"
-                                :key="index"
-                                :src="photo.prefix ? `${photo.prefix}original${photo.suffix}` : photo"
-                                :alt="`${galleryPlace.name} photo ${index + 1}`"
-                                class="aspect-square h-auto w-full cursor-pointer rounded-lg object-cover"
-                                loading="lazy"
-                                @error="$event.target.style.display = 'none'"
-                                @click="
-                                    () => {
-                                        /* Potentially open full screen image viewer */
-                                    }
-                                "
-                            />
+                        <div class="relative flex-1 flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-900 p-2">
+                            <!-- Scrollable container for the grid -->
+                            <div class="w-full h-full overflow-y-auto p-4">
+                                <!-- Loading State -->
+                                <div v-if="galleryLoading" class="flex items-center justify-center h-full">
+                                    <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span class="text-muted-foreground">Loading details...</span>
+                                </div>
+
+                                <!-- Error State -->
+                                <div v-else-if="galleryError" class="text-center text-destructive p-4">
+                                    <p><strong>Error:</strong> {{ galleryError }}</p>
+                                </div>
+
+                                <!-- Image Grid Display State -->
+                                <div v-else-if="galleryPlace && galleryPlace.photos && galleryPlace.photos.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    <div v-for="(photoUrl, index) in galleryPlace.photos" :key="photoUrl + '-' + index" class="aspect-square overflow-hidden rounded-md bg-muted">
+                                        <img
+                                            :src="photoUrl"
+                                            :alt="`Photo ${index + 1} for ${galleryPlace.name}`"
+                                            class="h-full w-full object-cover transition-transform duration-300 hover:scale-105 cursor-pointer" 
+                                            loading="lazy" 
+                                            @click="() => console.log('Clicked image:', photoUrl)" 
+                                        />
+                                    </div>
+                                </div>
+
+                                <!-- No Photos State -->
+                                <div v-else class="flex items-center justify-center h-full text-center text-muted-foreground">
+                                    {{ galleryError && galleryError.includes('No photos found') ? galleryError : 'No photos available for this place.' }}
+                                </div>
+                            </div>
                         </div>
-                        <div v-else class="py-6 text-center text-muted-foreground">No photos available for this place.</div>
                         <DialogFooter>
                             <DialogClose as-child>
                                 <Button type="button" variant="secondary">Close</Button>
