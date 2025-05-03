@@ -5,49 +5,50 @@
 /* ShadCN Theme Variables and Base Styles */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%; /* Card background color (white) */
-    --card-foreground: 222.2 84% 4.9%; /* Card text color */
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 217 54% 51%; /* Changed to brighter blue (Tailwind blue-600 equivalent) */
-    --primary-foreground: 0 0% 100%; /* Changed to white */
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    /* Light Theme - Blue/Indigo Palette */
+    --background: 210 50% 98%; /* Very light cool gray/blue */
+    --foreground: 224 71% 10%; /* Dark blue text */
+    --card: 210 50% 96%; /* Slightly darker light blue */
+    --card-foreground: 224 71% 10%; /* Dark blue text */
+    --popover: 210 50% 96%;
+    --popover-foreground: 224 71% 10%;
+    --primary: 217 71% 53%; /* blue-600 */
+    --primary-foreground: 210 40% 98%; /* Almost white text */
+    --secondary: 210 45% 93%; /* Lighter blue-gray */
+    --secondary-foreground: 224 71% 10%; /* Dark blue text */
+    --muted: 210 45% 93%;
+    --muted-foreground: 215 20% 55%; /* Muted blue-gray text */
+    --accent: 210 50% 90%; /* Lighter accent blue */
+    --accent-foreground: 224 71% 10%; /* Dark blue text */
+    --destructive: 0 84.2% 60.2%; /* Keep red */
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 54% 51%; /* Changed to primary color */
+    --border: 210 40% 88%; /* Soft blue-gray border */
+    --input: 210 40% 88%;
+    --ring: 217 71% 53%; /* blue-600 */
     --radius: 0.5rem; /* Adjust border radius */
   }
 
   .dark {
-    /* Dark theme settings (if used) */
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Dark Theme - Indigo/Deep Blue Palette */
+    --background: 230 40% 12%; /* Deep dark blue/indigo */
+    --foreground: 210 40% 95%; /* Light gray-blue text */
+    --card: 230 40% 18%; /* Slightly lighter dark blue */
+    --card-foreground: 210 40% 95%;
+    --popover: 230 40% 18%;
+    --popover-foreground: 210 40% 95%;
+    --primary: 210 80% 70%; /* Brighter sky blue for contrast */
+    --primary-foreground: 224 71% 10%; /* Dark blue text for contrast on primary */
+    --secondary: 230 35% 25%; /* Darker muted blue */
+    --secondary-foreground: 210 40% 95%;
+    --muted: 230 35% 25%;
+    --muted-foreground: 215 20% 65%; /* Dimmer light text */
+    --accent: 210 80% 30%; /* Darker accent blue */
+    --accent-foreground: 210 40% 95%;
+    --destructive: 0 62.8% 45%; /* Darker red */
+    --destructive-foreground: 210 40% 95%;
+    --border: 230 30% 30%; /* Muted dark border */
+    --input: 230 30% 30%;
+    --ring: 210 80% 70%; /* Brighter sky blue */
   }
 }
 
