@@ -2,17 +2,15 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import axios from 'axios'; 
-import { Input } from '@/components/ui/input'; 
-import { Button } from '@/components/ui/button'; 
+import axios from 'axios';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
-} from '@/components/ui/card'; 
+} from '@/components/ui/card';
 
 // Refs for search functionality
 const cityName = ref('');

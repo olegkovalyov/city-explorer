@@ -5,28 +5,22 @@ import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import WeatherDisplay from '@/Components/WeatherDisplay.vue'; 
+import LocalInfoCard from '@/Components/LocalInfoCard.vue'; 
 import { Star } from 'lucide-vue-next';
 
-import { useWeather } from '@/composables/useWeather.js';
-import { usePlaces } from '@/composables/usePlaces.js';
 import { useFavorites } from '@/composables/useFavorites.js';
 import { useGalleryModal } from '@/composables/useGalleryModal.js';
 import { useMapbox } from '@/composables/useMapbox.js';
+import { usePlaces } from '@/composables/usePlaces.js';
+import { useWeather } from '@/composables/useWeather.js';
 
 const props = defineProps({
     mapboxToken: String,
@@ -38,58 +32,32 @@ const geocoderContainer = ref(null);
 // Ref for controlling the active tab (Search Results / Favorites)
 const activeTab = ref('search');
 
-const {
-    coordinates,
-} = useMapbox(props.mapboxToken, mapContainer, geocoderContainer);
+const { coordinates } = useMapbox(props.mapboxToken, mapContainer, geocoderContainer);
 
-const {
-    favoritePlaces,
-    favoritesLoading,
-    favoritesError,
-    isFavorite,
-    fetchFavorites,
-    handleToggleFavorite
-} = useFavorites();
+const { favoritePlaces, favoritesLoading, favoritesError, isFavorite, fetchFavorites, handleToggleFavorite } = useFavorites();
 
-const {
-    weatherData,
-    weatherLoading,
-    weatherError,
-    getWeather,
-    localTime,
-    localCurrency
-} = useWeather();
+const { weatherData, weatherLoading, weatherError, getWeather, localTime, localCurrency } = useWeather();
 
-const {
-    places,
-    placesLoading,
-    placesError,
-    getPlaces
-} = usePlaces();
+const { places, placesLoading, placesError, getPlaces } = usePlaces();
 
-const {
-    galleryPlace,
-    isGalleryOpen,
-    galleryLoading,
-    galleryError,
-    openGallery,
-    closeGallery,
-} = useGalleryModal();
+const { galleryPlace, isGalleryOpen, galleryLoading, galleryError, openGallery, closeGallery } = useGalleryModal();
 
 onMounted(() => {
     fetchFavorites();
 });
 
-watch(coordinates, (newCoords) => {
-    if (newCoords) {
-        getWeather(newCoords.latitude, newCoords.longitude);
-        getPlaces(newCoords.latitude, newCoords.longitude);
-    }
-}, { immediate: true });
+watch(
+    coordinates,
+    (newCoords) => {
+        if (newCoords) {
+            getWeather(newCoords.latitude, newCoords.longitude);
+            getPlaces(newCoords.latitude, newCoords.longitude);
+        }
+    },
+    { immediate: true },
+);
 
-onUnmounted(() => {
-});
-
+onUnmounted(() => {});
 </script>
 
 <template>
@@ -107,49 +75,18 @@ onUnmounted(() => {
                                 <div ref="geocoderContainer" class="mb-4"></div>
                                 <p class="text-xs text-muted-foreground">Enter an address or place name above.</p>
 
-                                <div v-if="coordinates || weatherLoading || weatherError" class="mt-4 rounded-lg border p-4 dark:border-gray-700">
-                                    <h4 class="text-md mb-2 font-semibold">Current Weather</h4>
-                                    <div v-if="weatherLoading" class="text-sm text-muted-foreground">Loading weather...</div>
-                                    <div v-else-if="weatherError" class="text-sm text-red-600 dark:text-red-400">Error: {{ weatherError }}</div>
-                                    <div v-else-if="weatherData" class="flex items-center space-x-4">
-                                        <img
-                                            v-if="weatherData.icon_url"
-                                            :src="weatherData.icon_url"
-                                            :alt="weatherData.description"
-                                            class="h-12 w-12"
-                                        />
-                                        <div>
-                                            <p class="text-lg font-medium">
-                                                {{ Math.round(weatherData.temperature) }}°C
-                                                <span v-if="weatherData.feels_like" class="text-sm text-muted-foreground"
-                                                >(feels like {{ Math.round(weatherData.feels_like) }}°C)</span
-                                                >
-                                            </p>
-                                            <p class="text-sm capitalize text-muted-foreground">{{ weatherData.description }}</p>
-                                            <p v-if="weatherData.city_name" class="text-xs text-muted-foreground">({{ weatherData.city_name }})</p>
-                                        </div>
-                                    </div>
-                                    <div v-if="weatherData" class="mt-3 space-y-1 border-t pt-3 text-sm text-muted-foreground dark:border-gray-600">
-                                        <p v-if="localTime">Local Time: {{ localTime }}</p>
-                                        <p v-if="localCurrency">Currency: {{ localCurrency }}</p>
-                                        <p v-if="weatherData.humidity !== null">Humidity: {{ weatherData.humidity }}%</p>
-                                        <p v-if="weatherData.wind_speed !== null">Wind: {{ weatherData.wind_speed.toFixed(1) }} m/s</p>
-                                    </div>
-                                    <div v-else-if="!weatherLoading && !weatherError" class="text-sm text-muted-foreground">
-                                        Weather data not available for this location.
-                                    </div>
-                                </div>
+                                <WeatherDisplay
+                                    :weather-data="weatherData"
+                                    :weather-loading="weatherLoading"
+                                    :weather-error="weatherError"
+                                />
 
                                 <!-- Local Time & Currency Card -->
-                                <Card v-if="weatherData" class="mt-4">
-                                    <CardHeader>
-                                        <CardTitle class="text-md">Local Info</CardTitle>
-                                    </CardHeader>
-                                    <CardContent class="space-y-2 text-sm">
-                                        <p><span class="font-medium">Time:</span> {{ localTime }}</p>
-                                        <p><span class="font-medium">Currency:</span> {{ localCurrency }}</p>
-                                    </CardContent>
-                                </Card>
+                                <LocalInfoCard
+                                    v-if="weatherData" 
+                                    :local-time="localTime"
+                                    :local-currency="localCurrency"
+                                />
 
                                 <div
                                     v-if="placesError"
@@ -187,7 +124,10 @@ onUnmounted(() => {
                                             <!-- Conditional rendering for Search Results -->
                                             <div v-if="placesLoading" class="text-center text-muted-foreground">Loading places...</div>
                                             <div v-else-if="placesError" class="text-center text-red-600 dark:text-red-400">{{ placesError }}</div>
-                                            <div v-else-if="places.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                                            <div
+                                                v-else-if="places.length > 0"
+                                                class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"
+                                            >
                                                 <div v-for="place in places" :key="place.id" class="relative">
                                                     <Card
                                                         class="h-full cursor-pointer transition-shadow duration-200 hover:shadow-lg"
@@ -240,12 +180,12 @@ onUnmounted(() => {
                                                         <CardContent class="p-4">
                                                             <CardTitle class="mb-1 truncate text-lg">{{ place.name }}</CardTitle>
                                                             <Badge variant="secondary" class="mb-2"
-                                                            ><img
-                                                                v-if="place.category_icon"
-                                                                :src="place.category_icon"
-                                                                :alt="place.category"
-                                                                class="mr-1 h-4 w-4"
-                                                            />{{ place.category || place.categories?.[0]?.name || 'N/A' }}
+                                                                ><img
+                                                                    v-if="place.category_icon"
+                                                                    :src="place.category_icon"
+                                                                    :alt="place.category"
+                                                                    class="mr-1 h-4 w-4"
+                                                                />{{ place.category || place.categories?.[0]?.name || 'N/A' }}
                                                             </Badge>
                                                             <p v-if="place.address" class="truncate text-sm text-muted-foreground">
                                                                 {{ place.address }}
@@ -338,12 +278,12 @@ onUnmounted(() => {
                                                         <CardContent class="p-4">
                                                             <CardTitle class="mb-1 truncate text-lg">{{ place.name }}</CardTitle>
                                                             <Badge variant="secondary" class="mb-2"
-                                                            ><img
-                                                                v-if="place.category_icon"
-                                                                :src="place.category_icon"
-                                                                :alt="place.category"
-                                                                class="mr-1 h-4 w-4"
-                                                            />{{ place.category || 'N/A' }}
+                                                                ><img
+                                                                    v-if="place.category_icon"
+                                                                    :src="place.category_icon"
+                                                                    :alt="place.category"
+                                                                    class="mr-1 h-4 w-4"
+                                                                />{{ place.category || 'N/A' }}
                                                             </Badge>
                                                             <p v-if="place.address" class="truncate text-sm text-muted-foreground">
                                                                 {{ place.address }}
@@ -390,38 +330,58 @@ onUnmounted(() => {
                                 {{ galleryPlace.address || galleryPlace.location?.formatted_address || 'Address not available' }}
                             </DialogDescription>
                         </DialogHeader>
-                        <div class="relative flex-1 flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-900 p-2">
+                        <div class="relative flex flex-1 items-center justify-center overflow-hidden bg-gray-100 p-2 dark:bg-gray-900">
                             <!-- Scrollable container for the grid -->
-                            <div class="w-full h-full overflow-y-auto p-4">
+                            <div class="h-full w-full overflow-y-auto p-4">
                                 <!-- Loading State -->
-                                <div v-if="galleryLoading" class="flex items-center justify-center h-full">
-                                    <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <div v-if="galleryLoading" class="flex h-full items-center justify-center">
+                                    <svg
+                                        class="-ml-1 mr-3 h-10 w-10 animate-spin text-primary"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        <path
+                                            class="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
                                     </svg>
                                     <span class="text-muted-foreground">Loading details...</span>
                                 </div>
 
                                 <!-- Error State -->
-                                <div v-else-if="galleryError" class="text-center text-destructive p-4">
+                                <div v-else-if="galleryError" class="p-4 text-center text-destructive">
                                     <p><strong>Error:</strong> {{ galleryError }}</p>
                                 </div>
 
                                 <!-- Image Grid Display State -->
-                                <div v-else-if="galleryPlace && galleryPlace.photos && galleryPlace.photos.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                    <div v-for="(photoUrl, index) in galleryPlace.photos" :key="photoUrl + '-' + index" class="aspect-square overflow-hidden rounded-md bg-muted">
+                                <div
+                                    v-else-if="galleryPlace && galleryPlace.photos && galleryPlace.photos.length > 0"
+                                    class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                                >
+                                    <div
+                                        v-for="(photoUrl, index) in galleryPlace.photos"
+                                        :key="photoUrl + '-' + index"
+                                        class="aspect-square overflow-hidden rounded-md bg-muted"
+                                    >
                                         <img
                                             :src="photoUrl"
                                             :alt="`Photo ${index + 1} for ${galleryPlace.name}`"
-                                            class="h-full w-full object-cover transition-transform duration-300 hover:scale-105 cursor-pointer"
+                                            class="h-full w-full cursor-pointer object-cover transition-transform duration-300 hover:scale-105"
                                             loading="lazy"
                                         />
                                     </div>
                                 </div>
 
                                 <!-- No Photos State -->
-                                <div v-else class="flex items-center justify-center h-full text-center text-muted-foreground">
-                                    {{ galleryError && galleryError.includes('No photos found') ? galleryError : 'No photos available for this place.' }}
+                                <div v-else class="flex h-full items-center justify-center text-center text-muted-foreground">
+                                    {{
+                                        galleryError && galleryError.includes('No photos found')
+                                            ? galleryError
+                                            : 'No photos available for this place.'
+                                    }}
                                 </div>
                             </div>
                         </div>
@@ -441,8 +401,8 @@ onUnmounted(() => {
 
 <style>
 .map-container {
-  height: 500px; /* Or adjust as needed */
-  width: 100%;
+    height: 500px; /* Or adjust as needed */
+    width: 100%;
 }
 
 /* Style the geocoder container if necessary */
@@ -456,11 +416,12 @@ onUnmounted(() => {
 }
 
 .geocoder-container .mapboxgl-ctrl-geocoder input[type='text'] {
-     padding: 0.75rem; /* Adjust padding */
+    padding: 0.75rem; /* Adjust padding */
 }
 
 /* Ensure map controls are visible in dark mode if needed */
-.mapboxgl-ctrl-attrib-inner, .mapboxgl-ctrl-logo {
+.mapboxgl-ctrl-attrib-inner,
+.mapboxgl-ctrl-logo {
     /* Add styles for dark mode visibility if necessary */
 }
 
