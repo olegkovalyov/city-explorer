@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\FavoriteCity; // Import FavoriteCity model
 use Illuminate\Http\Request; // Import Request
 use Illuminate\Http\JsonResponse; // For type hinting
-use Illuminate\Support\Facades\Auth; // To get authenticated user
 use Illuminate\Validation\Rule; // For unique rule
 
 class FavoriteCityController extends Controller

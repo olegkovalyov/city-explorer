@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\FavoriteCityController;
 use App\Http\Controllers\Api\GeocodingController;
 use App\Http\Controllers\Api\PlacesController;
 use App\Http\Controllers\Api\WeatherController;
+use App\Http\Controllers\Api\FavoritePlaceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,19 +19,25 @@ use App\Http\Controllers\Api\WeatherController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-// Geocoding route
-Route::middleware('auth:sanctum')->get('/geocode', [GeocodingController::class, 'getCoordinates']);
-
-// New Foursquare Places route
-Route::middleware('auth:sanctum')->get('/places', [PlacesController::class, 'index']);
-
-// Routes for Favorite Cities API
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('favorite-cities', FavoriteCityController::class)->except(['update', 'show']);
-});
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 
-Route::middleware('auth:sanctum')->get('/weather', [WeatherController::class, 'index']);
+    // Geocoding route
+    Route::get('/geocode', [GeocodingController::class, 'getCoordinates']);
+
+    // New Foursquare Places route
+    Route::get('/places', [PlacesController::class, 'index']);
+
+    // Weather
+    Route::get('/weather', [WeatherController::class, 'index']);
+
+    // Routes for Favorite Cities API
+    Route::apiResource('favorite-cities', FavoriteCityController::class)->except(['update', 'show']);
+
+    // Favorite Places
+    Route::get('/favorite-places', [FavoritePlaceController::class, 'index'])->name('api.favorite-places.index');
+    Route::post('/favorite-places', [FavoritePlaceController::class, 'store'])->name('api.favorite-places.store');
+    Route::delete('/favorite-places/{fsq_id}', [FavoritePlaceController::class, 'destroy'])->name('api.favorite-places.destroy');
+});
