@@ -18,7 +18,9 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     // Redirect to city-explorer or render a different dashboard if needed
     // For now, let's keep rendering the default Dashboard component
-    return Inertia::render('Dashboard');
+    return Inertia::render('Dashboard', [
+        'mapboxToken' => env('MAPBOX_ACCESS_TOKEN')
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // City Explorer route
