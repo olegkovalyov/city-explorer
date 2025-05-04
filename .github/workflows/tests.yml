@@ -21,20 +21,21 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.4
+          php-version: 8.2
           tools: composer:v2
           coverage: xdebug
+          extensions: mbstring, pdo, pdo_sqlite, sqlite3, xml, curl, dom, fileinfo, zip
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '18'
           cache: 'npm'
 
       - name: Install Node Dependencies
         run: npm ci
 
-      - name: Install Dependencies
+      - name: Install Composer Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Create Storage Directories
@@ -45,10 +46,30 @@ jobs:
           mkdir -p storage/logs
 
       - name: Set Storage Permissions
-        run: chmod -R 777 storage
+        run: chmod -R 777 storage bootstrap/cache
 
-      - name: Copy Environment File
-        run: cp .env.example .env
+      - name: Create Environment File
+        run: |
+          echo "APP_NAME=CityExplorer" > .env
+          echo "APP_ENV=testing" >> .env
+          echo "APP_KEY=" >> .env
+          echo "APP_DEBUG=true" >> .env
+          echo "APP_URL=http://localhost" >> .env
+          echo "APP_LOCALE=en" >> .env
+          echo "APP_MAINTENANCE_DRIVER=file" >> .env
+          echo "BCRYPT_ROUNDS=4" >> .env
+          echo "CACHE_STORE=array" >> .env
+          echo "DB_CONNECTION=sqlite" >> .env
+          echo "DB_DATABASE=:memory:" >> .env
+          echo "MAIL_MAILER=array" >> .env
+          echo "PULSE_ENABLED=false" >> .env
+          echo "QUEUE_CONNECTION=sync" >> .env
+          echo "SESSION_DRIVER=array" >> .env
+          echo "TELESCOPE_ENABLED=false" >> .env
+          echo "OPENWEATHERMAP_API_KEY=test_api_key" >> .env
+          echo "FOURSQUARE_API_KEY=test_api_key" >> .env
+          echo "FOURSQUARE_API_URL=https://api.foursquare.com/v3" >> .env
+          echo "MAPBOX_ACCESS_TOKEN=test_token" >> .env
 
       - name: Generate Application Key
         run: php artisan key:generate
@@ -58,6 +79,7 @@ jobs:
           php artisan config:clear
           php artisan route:clear
           php artisan view:clear
+          php artisan cache:clear
 
       - name: Publish Ziggy Configuration
         run: php artisan ziggy:generate
@@ -65,12 +87,5 @@ jobs:
       - name: Build Assets
         run: npm run build
 
-      - name: Tests
-        env:
-          APP_ENV: testing
-          CACHE_DRIVER: array
-          SESSION_DRIVER: array
-          QUEUE_CONNECTION: sync
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-        run: ./vendor/bin/phpunit
+      - name: Run Tests
+        run: php artisan test
