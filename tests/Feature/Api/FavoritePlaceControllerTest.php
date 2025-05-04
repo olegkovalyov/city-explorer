@@ -330,6 +330,31 @@ class FavoritePlaceControllerTest extends TestCase
         $responseData = json_decode($response->getContent(), true);
         $this->assertEquals('Unexpected error occurred', $responseData['message']);
     }
+    
+    public function testHandlesDatabaseErrorOnDestroy()
+    {
+        // Настраиваем мок для метода deleteFavoritePlace, возвращающий ошибку БД
+        $this->mockPlaceService->shouldReceive('deleteFavoritePlace')
+            ->once()
+            ->withArgs(function (DeleteFavoritePlaceData $data) {
+                return $data->user->id === $this->user->id && $data->fsqId === '123abc';
+            })
+            ->andReturn(Result::failure(ErrorCode::DATABASE_ERROR, 'Database error on delete'));
+
+        // Создаем Request с пользователем
+        $request = Request::create('/api/favorite-places/123abc', 'DELETE');
+        $request->setUserResolver(function () {
+            return $this->user;
+        });
+
+        // Act
+        $response = $this->controller->destroy($request, '123abc');
+
+        // Assert
+        $this->assertEquals(500, $response->getStatusCode());
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertEquals('Database error on delete', $responseData['message']);
+    }
 
     protected function tearDown(): void
     {
