@@ -14,9 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class PlaceService implements PlaceServiceInterface
 {
-    public function __construct()
-    {
-    }
 
     public function getFavoritePlaces(GetFavoritePlacesData $data): Result
     {

@@ -35,13 +35,4 @@ return [
         ],
     ],
 
-    'openweathermap' => [
-        'key' => env('OPENWEATHERMAP_API_KEY'),
-        'base_url' => env('OPENWEATHERMAP_BASE_URL', 'http://api.openweathermap.org/geo/1.0/direct'),
-    ],
-
-    'foursquare' => [
-        'key' => env('FOURSQUARE_API_KEY'),
-    ],
-
 ];

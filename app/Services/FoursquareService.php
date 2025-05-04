@@ -15,52 +15,41 @@ use Throwable;
 
 class FoursquareService implements ExternalPlaceSearchInterface
 {
-    private const DEFAULT_FIELDS = 'fsq_id,name,categories,location,photos';
-    private const DEFAULT_LIMIT = 6;
-    private int $cacheTtl = 604800; // 1 week in seconds
-
-    protected string $apiKey;
-    protected string $baseUrl = 'https://api.foursquare.com/v3/places';
-
-    public function __construct()
-    {
-        $this->apiKey = config('services.foursquare.key');
-    }
-
     protected function prepareRequest(): PendingRequest
     {
-        if (empty($this->apiKey)) {
+        $apiKey = config('foursquare.api_key');
+        if (empty($apiKey)) {
             throw new \RuntimeException('Foursquare API key is not configured.');
         }
 
+        $apiKey = config('foursquare.api_key');
+        $baseUrl = config('foursquare.base_url');
         return Http::timeout(10)
-            ->baseUrl($this->baseUrl)
+            ->baseUrl($baseUrl)
             ->withHeaders([
-                'Authorization' => $this->apiKey,
+                'Authorization' => $apiKey,
                 'Accept' => 'application/json',
             ]);
     }
 
     public function searchPlaces(
         float $latitude,
-        float $longitude,
-        int $limit = self::DEFAULT_LIMIT,
-        string $fields = self::DEFAULT_FIELDS,
-        ?int $radius = null
+        float $longitude
     ): Result {
+        $limit = config('foursquare.search_limit');
+        $fields = 'fsq_id,name,categories,location,photos';
+
         $queryParams = [
             'll' => $latitude.','.$longitude,
             'limit' => $limit,
             'fields' => $fields,
         ];
-        if ($radius !== null) {
-            $queryParams['radius'] = $radius;
-        }
         ksort($queryParams);
-        $cacheKey = 'foursquare_search_' . md5(json_encode($queryParams));
+        $cacheKey = 'foursquare_search_'.md5(json_encode($queryParams));
         $endpoint = 'search';
 
-        return Cache::remember($cacheKey, $this->cacheTtl, function () use ($endpoint, $queryParams) {
+        $ttl = config('foursquare.cache_ttl');
+        return Cache::remember($cacheKey, $ttl, function () use ($endpoint, $queryParams) {
             try {
                 $response = $this->prepareRequest()->get($endpoint, $queryParams);
 
@@ -70,7 +59,6 @@ class FoursquareService implements ExternalPlaceSearchInterface
 
                 $results = $response->json('results', []);
                 return Result::success($results);
-
             } catch (ConnectionException $e) {
                 $context = ['error' => $e->getMessage()];
                 Log::error('FoursquareService@searchPlaces: ConnectionException caught.', [
@@ -89,17 +77,19 @@ class FoursquareService implements ExternalPlaceSearchInterface
         });
     }
 
-    public function getPlaceDetails(string $fsqId, string $fields = self::DEFAULT_FIELDS): Result
+    public function getPlaceDetails(string $fsqId): Result
     {
+        $fields = 'fsq_id,name,categories,location,photos';
         if (empty($fsqId)) {
             return Result::failure(ErrorCode::BAD_REQUEST_ERROR, 'Foursquare ID cannot be empty.');
         }
 
         $queryParams = ['fields' => $fields];
         $endpoint = $fsqId;
-        $cacheKey = 'foursquare_details_' . md5($fsqId . '_' . $fields);
+        $cacheKey = 'foursquare_details_'.md5($fsqId.'_'.$fields);
+        $ttl = config('foursquare.cache_ttl');
 
-        return Cache::remember($cacheKey, $this->cacheTtl, function () use ($endpoint, $queryParams, $fsqId) {
+        return Cache::remember($cacheKey, $ttl, function () use ($endpoint, $queryParams, $fsqId) {
             try {
                 $response = $this->prepareRequest()->get($endpoint, $queryParams);
 
@@ -118,7 +108,6 @@ class FoursquareService implements ExternalPlaceSearchInterface
                     'body' => $response->body(),
                 ]);
                 return Result::failure(ErrorCode::FOURSQUARE_API_ERROR, 'Received invalid data format from Foursquare.', ['fsq_id' => $fsqId]);
-
             } catch (ConnectionException $e) {
                 $context = ['error' => $e->getMessage()];
                 Log::error('FoursquareService@getPlaceDetails: ConnectionException caught.', [

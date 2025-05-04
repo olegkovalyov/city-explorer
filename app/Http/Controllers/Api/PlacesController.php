@@ -26,8 +26,7 @@ class PlacesController extends Controller
 
         $result = $this->foursquareService->searchPlaces(
             latitude: $validatedData['latitude'],
-            longitude: $validatedData['longitude'],
-            limit: $validatedData['limit']
+            longitude: $validatedData['longitude']
         );
 
         if ($result->isFailure()) {

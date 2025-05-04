@@ -16,24 +16,19 @@ use Throwable;
 
 class OpenWeatherMapWeatherService implements WeatherServiceInterface
 {
-    private const API_ENDPOINT = '/data/2.5/weather';
-    private int $cacheTtl = 900;
-
-    protected string $apiKey;
-    protected string $baseUrl = 'https://api.openweathermap.org';
-    private GeocodingServiceInterface $geocodingService;
-
-    public function __construct(GeocodingServiceInterface $geocodingService)
-    {
-        $this->apiKey = config('services.openweathermap.key');
-        $this->geocodingService = $geocodingService;
-    }
+    public function __construct(
+        private readonly GeocodingServiceInterface $geocodingService
+    ) {}
 
     public function getCurrentWeather(GetWeatherData $data): Result
     {
-        if (empty($this->apiKey)) {
+        $apiKey = config('openweathermap.api_key');
+        $baseUrl = config('openweathermap.weather.base_url');
+        $cacheTtl = config('openweathermap.weather.cache_ttl');
+
+        if (empty($apiKey)) {
             Log::critical('OpenWeatherMap API key for Weather is not configured.');
-            return Result::failure(ErrorCode::WEATHER_API_KEY_MISSING);
+            return Result::failure(ErrorCode::OPENWEATHERMAP_API_KEY_MISSING);
         }
 
         $latitude = $data->latitude;
@@ -63,18 +58,17 @@ class OpenWeatherMapWeatherService implements WeatherServiceInterface
         $query = [
             'lat' => $latitude,
             'lon' => $longitude,
-            'appid' => $this->apiKey,
+            'appid' => $apiKey,
             'units' => 'metric',
         ];
 
         Log::debug('WeatherService: Attempting cache lookup.', ['cache_key' => $cacheKey, 'coords' => compact('latitude', 'longitude')]);
 
-        $result = Cache::remember($cacheKey, $this->cacheTtl, function () use ($query, $latitude, $longitude) {
+        $result = Cache::remember($cacheKey, $cacheTtl, function () use ($query, $latitude, $longitude, $baseUrl, $apiKey) {
             Log::debug('WeatherService: Cache miss. Calling Weather API.', ['coords' => compact('latitude', 'longitude')]);
             try {
                 $response = Http::timeout(10)
-                                ->baseUrl($this->baseUrl)
-                                ->get(self::API_ENDPOINT, $query);
+                                ->get($baseUrl, $query);
 
                 if (!$response->successful()) {
                     $apiResult = $this->handleApiError($response, 'getCurrentWeather', $query);
