@@ -5,19 +5,13 @@ import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import WeatherDisplay from '@/Components/WeatherDisplay.vue'; 
-import LocalInfoCard from '@/Components/LocalInfoCard.vue'; 
-import SearchResults from '@/Components/SearchResults.vue'; 
-import FavoritesList from '@/Components/FavoritesList.vue'; 
-import GalleryModal from '@/Components/GalleryModal.vue'; 
-import { Star } from 'lucide-vue-next';
+import WeatherDisplay from '@/Components/WeatherDisplay.vue';
+import LocalInfoCard from '@/Components/LocalInfoCard.vue';
+import SearchResults from '@/Components/SearchResults.vue';
+import FavoritesList from '@/Components/FavoritesList.vue';
+import GalleryModal from '@/Components/GalleryModal.vue';
 
 import { useFavorites } from '@/composables/useFavorites.js';
 import { useGalleryModal } from '@/composables/useGalleryModal.js';
@@ -43,7 +37,7 @@ const { weatherData, weatherLoading, weatherError, getWeather, localTime, localC
 
 const { places, placesLoading, placesError, getPlaces } = usePlaces();
 
-const { galleryPlace, isGalleryOpen, galleryLoading, galleryError, openGallery, closeGallery } = useGalleryModal();
+const { galleryPlace, isGalleryOpen, galleryLoading, galleryError, openGallery } = useGalleryModal();
 
 onMounted(() => {
     fetchFavorites();
@@ -86,7 +80,7 @@ onUnmounted(() => {});
 
                                 <!-- Local Time & Currency Card -->
                                 <LocalInfoCard
-                                    v-if="weatherData" 
+                                    v-if="weatherData"
                                     :local-time="localTime"
                                     :local-currency="localCurrency"
                                 />

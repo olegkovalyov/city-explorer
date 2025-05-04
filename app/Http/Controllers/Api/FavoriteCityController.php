@@ -2,89 +2,83 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Services\UserCityServiceInterface;
 use App\Http\Controllers\Controller;
-use App\Models\FavoriteCity; // Import FavoriteCity model
-use Illuminate\Http\Request; // Import Request
-use Illuminate\Http\JsonResponse; // For type hinting
-use Illuminate\Validation\Rule; // For unique rule
+use App\Http\Requests\StoreFavoriteCityRequest;
+use App\Data\GetFavoriteCitiesData;
+use App\Data\StoreFavoriteCityData;
+use App\Data\DeleteFavoriteCityData;
+use App\Support\Result;
+use App\Enums\ErrorCode;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class FavoriteCityController extends Controller
 {
-    /**
-     * Display a listing of the authenticated user's favorite cities.
-     */
+    public function __construct(protected UserCityServiceInterface $cityService)
+    {
+    }
+
     public function index(Request $request): JsonResponse
     {
-        $favorites = $request->user()->favoriteCities()->orderBy('city_name')->get();
-        // Alternatively, if you didn't define the relationship in User model yet:
-        // $favorites = FavoriteCity::where('user_id', $request->user()->id)->orderBy('city_name')->get();
+        $dto = new GetFavoriteCitiesData(user: $request->user());
+        $result = $this->cityService->getFavoriteCities($dto);
 
-        return response()->json($favorites);
-    }
-
-    /**
-     * Store a newly created favorite city in storage for the authenticated user.
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'city_name' => [
-                'required',
-                'string',
-                'max:255',
-                 // Ensure the city isn't already favorited by this user
-                Rule::unique('favorite_cities')->where(function ($query) use ($request) {
-                    return $query->where('user_id', $request->user()->id);
-                }),
-            ],
-            'latitude' => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
-        ]);
-
-        $favorite = $request->user()->favoriteCities()->create($validated);
-        // Alternatively:
-        // $favorite = FavoriteCity::create([
-        //     'user_id' => $request->user()->id,
-        //     'city_name' => $validated['city_name'],
-        //     'latitude' => $validated['latitude'],
-        //     'longitude' => $validated['longitude'],
-        // ]);
-
-        return response()->json($favorite, 201); // 201 Created status
-    }
-
-    /**
-     * Display the specified resource.
-     * We don't need this for now.
-     */
-    public function show(string $id)
-    {
-        // Not implemented
-        return response()->json(['message' => 'Not Implemented'], 501);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     * We don't need this for now.
-     */
-    public function update(Request $request, string $id)
-    {
-        // Not implemented
-        return response()->json(['message' => 'Not Implemented'], 501);
-    }
-
-    /**
-     * Remove the specified favorite city from storage for the authenticated user.
-     */
-    public function destroy(Request $request, FavoriteCity $favoriteCity): JsonResponse
-    {
-        // Authorization: Check if the authenticated user owns this favorite city
-        if ($request->user()->id !== $favoriteCity->user_id) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if ($result->isSuccess()) {
+            return response()->json($result->getValue());
         }
 
-        $favoriteCity->delete();
+        return $this->handleFailureResult($result, 'index');
+    }
 
-        return response()->json(null, 204); // 204 No Content status
+    public function store(StoreFavoriteCityRequest $request): JsonResponse
+    {
+        $dto = StoreFavoriteCityData::fromValidated($request->user(), $request->validated());
+        $result = $this->cityService->storeFavoriteCity($dto);
+
+        if ($result->isSuccess()) {
+            $favoriteCity = $result->getValue(); // Get the FavoriteCity model
+            $statusCode = $favoriteCity->wasRecentlyCreated ? 201 : 200; // Check if created or found
+            return response()->json($favoriteCity, $statusCode);
+        }
+
+        return $this->handleFailureResult($result, 'store');
+    }
+
+    public function destroy(Request $request, $id): JsonResponse // Keep $id from route
+    {
+        $dto = new DeleteFavoriteCityData(user: $request->user(), cityId: (int) $id);
+        $result = $this->cityService->deleteFavoriteCity($dto);
+
+        if ($result->isSuccess()) {
+            return response()->json(null, 204);
+        }
+
+        return $this->handleFailureResult($result, 'destroy', ['cityId' => $id]);
+    }
+
+    private function handleFailureResult(
+        Result $result,
+        string $method,
+        array $extraLogContext = []
+    ): JsonResponse {
+        $errorCode = $result->getErrorCode() ?? ErrorCode::UNEXPECTED_ERROR;
+        $errorMessage = $result->getErrorMessage() ?? ErrorCode::UNEXPECTED_ERROR->message();
+
+        $logContext = array_merge($extraLogContext, [
+            'error_code' => $errorCode->value,
+            'message' => $errorMessage,
+            'user_id' => auth()->id(),
+        ]);
+        Log::error("FavoriteCityController@{$method} failure", $logContext);
+
+        $statusCode = match ($errorCode) {
+            ErrorCode::NOT_FOUND => 404,
+            ErrorCode::DATABASE_ERROR, ErrorCode::UNEXPECTED_ERROR => 500,
+            default => 500,
+        };
+
+        return response()->json(['message' => $errorMessage], $statusCode);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -50,8 +51,16 @@ class User extends Authenticatable
     /**
      * Get the favorite places for the user.
      */
-    public function favoritePlaces()
+    public function favoritePlaces(): HasMany
     {
         return $this->hasMany(FavoritePlace::class);
+    }
+
+    /**
+     * Get the favorite cities for the user.
+     */
+    public function favoriteCities(): HasMany
+    {
+        return $this->hasMany(FavoriteCity::class);
     }
 }

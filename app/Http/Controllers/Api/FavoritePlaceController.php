@@ -2,126 +2,83 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Services\PlaceServiceInterface;
 use App\Http\Controllers\Controller;
-use App\Models\FavoritePlace;
+use App\Support\Result;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Database\QueryException;
+use App\Http\Requests\StoreFavoritePlaceRequest;
+use App\Data\GetFavoritePlacesData;
+use App\Data\StoreFavoritePlaceData;
+use App\Data\DeleteFavoritePlaceData;
+use App\Enums\ErrorCode;
+use Illuminate\Http\JsonResponse;
 
 class FavoritePlaceController extends Controller
 {
-    /**
-     * Display a listing of the authenticated user's favorite places.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index(Request $request)
+    public function __construct(protected PlaceServiceInterface $placeService)
     {
-        try {
-            $user = $request->user(); // Get authenticated user via injected request (works with sanctum)
-            if (!$user) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
-            }
-            $favorites = $user->favoritePlaces()->orderBy('created_at', 'desc')->get();
-            return response()->json($favorites);
-        } catch (\Exception $e) {
-            Log::error('Error fetching favorite places: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to fetch favorite places.'], 500);
-        }
     }
 
-    /**
-     * Store a newly created favorite place in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        try {
-            $user = $request->user();
-            if (!$user) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
-            }
+        $dto = new GetFavoritePlacesData(user: $request->user());
+        $result = $this->placeService->getFavoritePlaces($dto);
 
-            $validatedData = $request->validate([
-                'fsq_id' => 'required|string|max:255',
-                'name' => 'required|string|max:255',
-                'address' => 'nullable|string|max:255',
-                'latitude' => 'nullable|numeric|between:-90,90',
-                'longitude' => 'nullable|numeric|between:-180,180',
-                'photo_url' => 'nullable|url|max:1024',
-                'category' => 'nullable|string|max:255',
-                'category_icon' => 'nullable|url|max:1024',
-            ]);
-
-            // Prepare data for creation, adding user_id
-            $dataToCreate = $validatedData;
-            $dataToCreate['user_id'] = $user->id;
-
-            // Use firstOrCreate to prevent duplicates based on user_id and fsq_id
-            $favorite = FavoritePlace::firstOrCreate(
-                ['user_id' => $user->id, 'fsq_id' => $validatedData['fsq_id']],
-                $dataToCreate
-            );
-
-            // Check if the model was recently created or already existed
-            if ($favorite->wasRecentlyCreated) {
-                return response()->json($favorite, 201); // Return 201 Created for new resource
-            } else {
-                // Optionally update if it exists, or just return the existing one
-                // $favorite->update($dataToCreate); // Uncomment if you want to update on subsequent requests
-                return response()->json($favorite, 200); // Return 200 OK if it already existed
-            }
-
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Invalid data provided.', 'errors' => $e->errors()], 422);
-        } catch (QueryException $e) {
-             // Catch potential unique constraint violation if firstOrCreate somehow fails (though unlikely)
-             Log::error('Database error adding favorite: ' . $e->getMessage());
-             // Check if it's a unique constraint violation (code 23000 for SQLSTATE)
-             if ($e->errorInfo[1] == 1062 || str_contains($e->getMessage(), 'UNIQUE constraint failed')) { // MySQL/SQLite specific checks
-                 return response()->json(['message' => 'Place already favorited.'], 409); // 409 Conflict
-             }
-             return response()->json(['message' => 'Database error occurred.'], 500);
-        } catch (\Exception $e) {
-            Log::error('Error adding favorite place: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to add favorite place.'], 500);
+        if ($result->isSuccess()) {
+            return response()->json($result->getValue());
         }
+
+        return $this->handleFailureResult($result, 'index');
     }
 
-    /**
-     * Remove the specified favorite place from storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $fsq_id  // Route parameter is fsq_id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy(Request $request, string $fsq_id)
+    public function store(StoreFavoritePlaceRequest $request): JsonResponse
     {
-        try {
-            $user = $request->user();
-            if (!$user) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
-            }
+        $dto = StoreFavoritePlaceData::fromValidated($request->user(), $request->validated());
+        $result = $this->placeService->storeFavoritePlace($dto);
 
-            $favorite = FavoritePlace::where('user_id', $user->id)
-                                   ->where('fsq_id', $fsq_id)
-                                   ->first();
-
-            if (!$favorite) {
-                return response()->json(['message' => 'Favorite place not found.'], 404);
-            }
-
-            $favorite->delete();
-
-            return response()->json(null, 204); // 204 No Content on successful deletion
-        } catch (\Exception $e) {
-            Log::error('Error deleting favorite place: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to delete favorite place.'], 500);
+        if ($result->isSuccess()) {
+            $favoritePlace = $result->getValue();
+            $statusCode = $favoritePlace->wasRecentlyCreated ? 201 : 200;
+            return response()->json($favoritePlace, $statusCode);
         }
+
+        return $this->handleFailureResult($result, 'store');
+    }
+
+    public function destroy(Request $request, string $fsqId): JsonResponse
+    {
+        $dto = new DeleteFavoritePlaceData(user: $request->user(), fsqId: $fsqId);
+        $result = $this->placeService->deleteFavoritePlace($dto);
+
+        if ($result->isSuccess()) {
+            return response()->json(null, 204);
+        }
+
+        return $this->handleFailureResult($result, 'destroy', ['fsqId' => $fsqId]);
+    }
+
+    private function handleFailureResult(
+        Result $result,
+        string $method,
+        array $extraLogContext = []
+    ): JsonResponse {
+        $errorCode = $result->getErrorCode() ?? ErrorCode::UNEXPECTED_ERROR;
+        $errorMessage = $result->getErrorMessage() ?? ErrorCode::UNEXPECTED_ERROR->message();
+
+        $logContext = array_merge($extraLogContext, [
+            'error_code' => $errorCode->value,
+            'message' => $errorMessage,
+            'user_id' => auth()->id(),
+        ]);
+        Log::error("FavoritePlaceController@{$method} failure", $logContext);
+
+        $statusCode = match ($errorCode) {
+            ErrorCode::NOT_FOUND => 404,
+            ErrorCode::DATABASE_ERROR, ErrorCode::UNEXPECTED_ERROR => 500,
+            default => 500,
+        };
+
+        return response()->json(['message' => $errorMessage], $statusCode);
     }
 }

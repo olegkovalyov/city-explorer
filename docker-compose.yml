@@ -69,6 +69,22 @@ services:
     networks:
       - app-network
 
+  # Redis Commander UI
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: city_explorer_redis_commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:cache:6379:1 # Connect to the 'cache' service on port 6379
+      # If your Redis requires a password, uncomment and set REDIS_PASSWORD below
+      # - REDIS_PASSWORD=${REDIS_PASSWORD} # Ensure REDIS_PASSWORD is set in your .env if needed
+    ports:
+      - "8081:8081" # Map host port 8081 to Redis Commander UI port 8081
+    networks:
+      - app-network
+    depends_on:
+      - cache # Ensure Redis starts before Redis Commander
+
 # Docker Networks
 networks:
   app-network:

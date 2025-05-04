@@ -35,8 +35,4 @@ return [
         ],
     ],
 
-    'openweathermap' => [
-        'key' => env('OPENWEATHERMAP_API_KEY'),
-    ],
-
 ];
