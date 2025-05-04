@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\ExternalPlaceSearchInterface;
 use App\Enums\ErrorCode;
 use App\Support\Result;
 use Illuminate\Http\Client\ConnectionException;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class FoursquareService
+class FoursquareService implements ExternalPlaceSearchInterface
 {
     private const DEFAULT_FIELDS = 'fsq_id,name,categories,location,photos';
     private const DEFAULT_LIMIT = 6;

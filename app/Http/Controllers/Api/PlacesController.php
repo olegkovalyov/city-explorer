@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Services\ExternalPlaceSearchInterface;
+use App\Contracts\Services\PlaceServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
-use App\Services\PlaceService;
-use App\Services\FoursquareService;
 use App\Support\Result;
 use App\Enums\ErrorCode;
 use App\Mappers\FoursquarePlaceMapper;
@@ -15,8 +15,8 @@ use App\Http\Requests\SearchPlacesRequest;
 class PlacesController extends Controller
 {
     public function __construct(
-        protected FoursquareService $foursquareService,
-        protected PlaceService $placeService
+        protected ExternalPlaceSearchInterface $foursquareService,
+        protected PlaceServiceInterface $placeService
     ) {
     }
 

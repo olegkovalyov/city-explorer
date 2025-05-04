@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\GeocodingServiceInterface;
+use App\Contracts\Services\WeatherServiceInterface;
 use App\Data\GetWeatherData;
 use App\Enums\ErrorCode;
 use App\Support\Result;
@@ -12,16 +14,16 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class OpenWeatherMapWeatherService
+class OpenWeatherMapWeatherService implements WeatherServiceInterface
 {
     private const API_ENDPOINT = '/data/2.5/weather';
     private int $cacheTtl = 900;
 
     protected string $apiKey;
     protected string $baseUrl = 'https://api.openweathermap.org';
-    private OpenWeatherMapGeocodingService $geocodingService;
+    private GeocodingServiceInterface $geocodingService;
 
-    public function __construct(OpenWeatherMapGeocodingService $geocodingService)
+    public function __construct(GeocodingServiceInterface $geocodingService)
     {
         $this->apiKey = config('services.openweathermap.key');
         $this->geocodingService = $geocodingService;

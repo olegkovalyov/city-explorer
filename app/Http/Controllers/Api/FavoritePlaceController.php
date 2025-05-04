@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Services\PlaceServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Support\Result;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\StoreFavoritePlaceRequest;
-use App\Services\PlaceService;
 use App\Data\GetFavoritePlacesData;
 use App\Data\StoreFavoritePlaceData;
 use App\Data\DeleteFavoritePlaceData;
@@ -16,7 +16,7 @@ use Illuminate\Http\JsonResponse;
 
 class FavoritePlaceController extends Controller
 {
-    public function __construct(protected PlaceService $placeService)
+    public function __construct(protected PlaceServiceInterface $placeService)
     {
     }
 

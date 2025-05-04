@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\PlaceServiceInterface;
 use App\Data\GetFavoritePlacesData;
 use App\Data\StoreFavoritePlaceData;
 use App\Data\DeleteFavoritePlaceData;
@@ -11,8 +12,12 @@ use App\Support\Result;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 
-class PlaceService
+class PlaceService implements PlaceServiceInterface
 {
+    public function __construct()
+    {
+    }
+
     public function getFavoritePlaces(GetFavoritePlacesData $data): Result
     {
         try {

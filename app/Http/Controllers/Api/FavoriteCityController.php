@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Services\UserCityServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreFavoriteCityRequest;
-use App\Services\CityService;
 use App\Data\GetFavoriteCitiesData;
 use App\Data\StoreFavoriteCityData;
 use App\Data\DeleteFavoriteCityData;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 
 class FavoriteCityController extends Controller
 {
-    public function __construct(protected CityService $cityService)
+    public function __construct(protected UserCityServiceInterface $cityService)
     {
     }
 

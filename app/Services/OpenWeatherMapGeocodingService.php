@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\GeocodingServiceInterface;
 use App\Enums\ErrorCode;
 use App\Support\Result;
 use Illuminate\Http\Client\ConnectionException;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class OpenWeatherMapGeocodingService
+class OpenWeatherMapGeocodingService implements GeocodingServiceInterface
 {
     protected ?string $apiKey;
     protected string $baseUrl;

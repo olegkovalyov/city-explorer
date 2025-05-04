@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\UserProfileServiceInterface;
 use App\Data\DeleteProfileData;
 use App\Data\UpdateProfileData;
 use App\Enums\ErrorCode;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class ProfileService
+class ProfileService implements UserProfileServiceInterface
 {
 
     public function updateProfile(UpdateProfileData $data): Result

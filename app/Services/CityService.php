@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\UserCityServiceInterface;
 use App\Data\DeleteFavoriteCityData;
 use App\Data\GetFavoriteCitiesData;
 use App\Data\StoreFavoriteCityData;
@@ -11,7 +12,7 @@ use App\Support\Result;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 
-class CityService
+class CityService implements UserCityServiceInterface
 {
 
     public function getFavoriteCities(GetFavoriteCitiesData $data): Result

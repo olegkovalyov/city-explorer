@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Services\WeatherServiceInterface;
 use App\Data\GetWeatherData;
 use App\Enums\ErrorCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GetWeatherRequest;
-use App\Services\OpenWeatherMapWeatherService;
 use App\Support\Result;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
 class WeatherController extends Controller
 {
-    public function __construct(private readonly OpenWeatherMapWeatherService $weatherService)
+    public function __construct(private readonly WeatherServiceInterface $weatherService)
     {
     }
 
