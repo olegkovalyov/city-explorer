@@ -22,12 +22,23 @@ enum ErrorCode: int
     case FOURSQUARE_CONNECTION_ERROR = 3003; // Or another suitable code
     case FOURSQUARE_API_ERROR = 3100; // Specific range for Foursquare
     case FOURSQUARE_API_UNAVAILABLE = 3101;
+    case FOURSQUARE_PLACE_NOT_FOUND = 7006; // Specific place ID not found
+
+    // Weather API Errors (OpenWeatherMap)
+    case WEATHER_API_KEY_MISSING = 8001;
+    case WEATHER_CONNECTION_ERROR = 8002;
+    case WEATHER_API_ERROR = 8003; // General/Client API error (4xx)
+    case WEATHER_API_UNAVAILABLE = 8005; // Server error (5xx)
+    case WEATHER_INVALID_COORDINATES = 8006; // Provided coordinates are invalid
 
     // OpenWeatherMap Errors (Starting from 3200)
     case OPENWEATHERMAP_API_KEY_MISSING = 3200;
     case OPENWEATHERMAP_CONNECTION_ERROR = 3201;
     case OPENWEATHERMAP_API_ERROR = 3202;
     case OPENWEATHERMAP_NO_RESULTS = 3203;
+
+    // Favorite Place Errors
+    case FAVORITE_PLACE_NOT_FOUND = 9001;
 
     // Profile Errors (Starting from 3300)
     case PROFILE_UPDATE_FAILED = 3300;

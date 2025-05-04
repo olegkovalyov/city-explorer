@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\FavoriteCityController;
-use App\Http\Controllers\Api\GeocodingController;
 use App\Http\Controllers\Api\PlacesController;
 use App\Http\Controllers\Api\WeatherController;
 use App\Http\Controllers\Api\FavoritePlaceController;
@@ -26,9 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-
-    // Geocoding route
-    Route::get('/geocode', [GeocodingController::class, 'getCoordinates']);
 
     // New Foursquare Places route
     Route::get('/places', [PlacesController::class, 'index']);
