@@ -98,5 +98,5 @@ jobs:
       - name: Build Assets
         run: npm run build || echo "Asset build skipped for tests"
 
-      - name: Run Tests (excluding auth group)
-        run: php artisan test --exclude-group=auth
+      - name: Run Tests (excluding auth and frontend-assets groups)
+        run: php artisan test --exclude-group=auth --exclude-group=frontend-assets

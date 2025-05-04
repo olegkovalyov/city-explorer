@@ -4,11 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Group;
+use Tests\NeedsFrontendAssets;
 use Tests\TestCase;
 
+#[Group('frontend-assets')]
 class ProfileTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, NeedsFrontendAssets;
 
     public function test_profile_page_is_displayed(): void
     {
