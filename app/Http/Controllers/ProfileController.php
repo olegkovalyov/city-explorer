@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Data\DeleteProfileData;
+use App\Data\UpdateProfileData;
+use App\Http\Requests\DeleteProfileRequest;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\ProfileService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,9 +17,13 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
+    protected ProfileService $profileService;
+
+    public function __construct(ProfileService $profileService)
+    {
+        $this->profileService = $profileService;
+    }
+
     public function edit(Request $request): Response
     {
         return Inertia::render('Profile/Edit', [
@@ -24,40 +32,39 @@ class ProfileController extends Controller
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $updateData = new UpdateProfileData(
+            user: $request->user(),
+            name: $request->validated('name'),
+            email: $request->validated('email')
+        );
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $result = $this->profileService->updateProfile($updateData);
+
+        if ($result->isSuccess()) {
+            return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        } else {
+            return Redirect::route('profile.edit')->with('error', 'profile-update-failed');
         }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit');
     }
 
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(DeleteProfileRequest $request): RedirectResponse
     {
-        $request->validate([
-            'password' => ['required', 'current_password'],
-        ]);
+        $deleteData = new DeleteProfileData(
+            user: $request->user(),
+            password: $request->validated('password')
+        );
 
-        $user = $request->user();
+        $result = $this->profileService->deleteProfile($deleteData);
 
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        if ($result->isSuccess()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return Redirect::to('/');
+        } else {
+            return back()->withErrors(['password' => 'Failed to delete profile. Please try again.']);
+        }
     }
 }

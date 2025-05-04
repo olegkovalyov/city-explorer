@@ -2,6 +2,8 @@
 
 namespace App\Contracts\Services;
 
+use App\Support\Result;
+
 /**
  * Interface GeocodingServiceContract
  * Defines the contract for services that provide geocoding functionality.
@@ -9,10 +11,10 @@ namespace App\Contracts\Services;
 interface GeocodingServiceContract
 {
     /**
-     * Get coordinates (latitude and longitude) for a given city name.
+     * Get coordinates by city name.
      *
-     * @param string $cityName The name of the city.
-     * @return array|null An array containing 'latitude' and 'longitude', or null if not found.
+     * @param string $cityName
+     * @return Result Contains ['latitude' => float, 'longitude' => float] on success, or ErrorCode on failure.
      */
-    public function getCoordinatesByCityName(string $cityName): ?array;
+    public function getCoordinatesByCityName(string $cityName): Result;
 }

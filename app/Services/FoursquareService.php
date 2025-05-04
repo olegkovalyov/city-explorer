@@ -12,6 +12,9 @@ use Throwable;
 
 class FoursquareService
 {
+    private const DEFAULT_FIELDS = 'fsq_id,name,categories,location,photos';
+    private const DEFAULT_LIMIT = 6;
+
     protected string $apiKey;
     protected string $baseUrl = 'https://api.foursquare.com/v3/places';
 
@@ -37,8 +40,8 @@ class FoursquareService
     public function searchPlaces(
         float $latitude,
         float $longitude,
-        int $limit = 6,
-        string $fields = 'fsq_id,name,categories,location,photos',
+        int $limit = self::DEFAULT_LIMIT,
+        string $fields = self::DEFAULT_FIELDS,
         ?int $radius = null
     ): Result {
         if (empty($this->apiKey)) {
