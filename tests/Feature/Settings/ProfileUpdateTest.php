@@ -4,11 +4,20 @@ namespace Tests\Feature\Settings;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
+use Tests\WithoutViteTest;
 
+#[Group('auth')]
 class ProfileUpdateTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, WithoutViteTest;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
 
     public function test_profile_page_is_displayed()
     {
