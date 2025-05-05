@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SubscriberController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\FavoriteCityController;
@@ -28,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // New Foursquare Places route
     Route::get('/places', [PlacesController::class, 'index']);
+
+    // New Foursquare Places route
+    Route::post('/subscribe', [SubscriberController::class, 'store']);
 
     // Weather
     Route::get('/weather', [WeatherController::class, 'index']);
